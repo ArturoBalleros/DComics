@@ -181,3 +181,21 @@ namespace DComics
         #endregion
     }
 }
+
+
+/*
+
+https://social.msdn.microsoft.com/Forums/es-ES/94cb6af5-9016-4248-a7b3-55eedbc63af8/descomprimir-archivos-rar-automaticamente?forum=vcses
+
+quizas podrias evaluar
+
+https://www.nuget.org/packages/dotnet-rar
+
+https://www.nuget.org/packages/dotnet-unrar
+
+o quizas este otro
+
+https://www.nuget.org/packages/SevenZipExtractor/
+
+
+*/
