@@ -116,7 +116,7 @@ namespace DComics
                 Process p = new Process();
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.FileName = "downloadComic.bat";
+                p.StartInfo.FileName = Directory.GetCurrentDirectory() + @"\Scripts\Download.bat";
                 p.StartInfo.Arguments = link;
                 p.Start();
                 string output = p.StandardOutput.ReadToEnd();
