@@ -1,3 +1,6 @@
+#!/usr/bin/python
+
+import sys
 from mega import Mega
 
 def downloadFileMega(link):
@@ -11,7 +14,7 @@ def downloadFileMega(link):
     try:
         m.download_url(link)
     except PermissionError: 
-        print("Oops!  That was no valid number.  Try again...")
+        return 'true'
     except:
         return 'false'
 
@@ -19,6 +22,6 @@ def downloadFileMega(link):
     
 #pip install mega.py
 #python -m pip install --upgrade pip
-#https://stackoverflow.com/questions/42012140/if-name-main-function-call/42013148
 if __name__ == '__main__':
+    link = str(sys.argv[1])
     print(downloadFileMega(link))
