@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DComics.Models
 {
@@ -13,6 +10,7 @@ namespace DComics.Models
         [JsonProperty("link")]
         public string Link { get; set; }
         public string NameWeb { get; set; }
+        public float SizeWeb { get; set; }
         public Comic()
         {
 

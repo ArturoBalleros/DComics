@@ -16,7 +16,7 @@ namespace DComics
             logger.Info("Inicio del proceso");
             try
             {
-                args = new string[] { "2", "" };
+                args = new string[] { "1", @"json.txt" };
                 if (args != null)
                 {
 
@@ -25,7 +25,6 @@ namespace DComics
                     /*
                         0 => Bajar últimos
                         1 => Fichero
-                        2 => JSON
                      */
                     Services services = new Services();
                     switch (option)
@@ -37,11 +36,7 @@ namespace DComics
                         case 1:
                             services.ReadFile(infoAdditional, logger);
                             break;
-
-                        case 2:
-                            services.ProcessJSON((JArray)infoAdditional, logger);
-                            break;
-
+                              
                         default:
                             return;
                     }

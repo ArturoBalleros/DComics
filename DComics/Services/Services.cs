@@ -38,6 +38,9 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
+        #endregion
+
+        #region Hook Method
         public void ProcessJSON(JArray array, ILog logger)
         {
             try
@@ -56,7 +59,7 @@ namespace DComics
                         result = false;
 
                     if (result)
-                        cont++; //Renombrar
+                        RenameFile(comic, logger);
                     else
                         collection.Add(comic);
                 }
@@ -80,6 +83,7 @@ namespace DComics
                 Uri uri = new Uri(comic.Link);
                 INodeInfo infoMega = mega.GetNodeFromLink(uri);
                 comic.NameWeb = infoMega.Name;
+                comic.SizeWeb = float.Parse(FormatSize(infoMega.Size));
                 return ExecuteBatch(comic.Link, logger);
             }
             catch (Exception ex)
@@ -97,6 +101,13 @@ namespace DComics
                 HtmlDocument doc = oWeb.Load(comic.Link);
                 comic.NameWeb = doc.DocumentNode.CssSelect(".dl-info").CssSelect(".filename").ToList()[0].InnerText;
                 string linkDownload = doc.DocumentNode.CssSelect(".download_link").CssSelect(".input").First().Attributes[2].Value;
+
+                //GetSize()
+                string size = doc.DocumentNode.CssSelect(".dl-info").CssSelect(".details").ToList()[0].InnerText;
+                size = size.Replace("File size: ", "º").Replace("MB", "º");
+                int dif = size.LastIndexOf("º") - size.IndexOf("º") - 1;
+                comic.SizeWeb = float.Parse(size.Substring(size.IndexOf("º") + 1, dif));
+
                 System.Net.WebClient wc = new System.Net.WebClient();
                 wc.DownloadFile(linkDownload, comic.NameWeb);
                 wc.Dispose();
@@ -121,7 +132,7 @@ namespace DComics
                 p.Start();
                 string output = p.StandardOutput.ReadToEnd();
                 p.WaitForExit();
-                return output.Equals("true");
+                return output.Equals("true\r\n");
             }
             catch (Exception ex)
             {
@@ -132,11 +143,30 @@ namespace DComics
         }
         #endregion
 
-        private void RenameFile(Comic comic, ILog logger) {
+        private void RenameFile(Comic comic, ILog logger)
+        {
+            string downloadPath = Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb;
+            string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
+            FileInfo fi = new FileInfo(downloadPath);
+            if (fi.Exists)
+            {
+                if (string.Format("{0:n1}", comic.SizeWeb).Equals(string.Format("{0:n1}", float.Parse(FormatSize(fi.Length)))))
+                {
+                    destinyPath += fi.Extension;
+                    if (fi.Extension.Equals(".cbr"))
+                    {
+                    }
+                    else if (fi.Extension.Equals(".rar"))
+                    {
+                    }
+                    else
+                    {
+                    }
+                }
 
-            string fileName = @"C:\Temp\MaheshTXFI.txt";
-            FileInfo fi = new FileInfo(fileName);
-          //  fi.Length;//Tamaño
+
+
+            }
 
         http://decodigo.com/c-sharp-renombrar-archivo
             //Mirar nombres extensiones etc......
@@ -179,6 +209,21 @@ namespace DComics
             }
         }
         #endregion
+
+
+
+
+
+
+
+        private static string FormatSize(long bytes)
+        {
+            decimal number = bytes;
+            while (Math.Round(number / 1024) >= 1)
+                number = number / 1024;
+            return string.Format("{0:n2}", number);
+        }
+
     }
 }
 
