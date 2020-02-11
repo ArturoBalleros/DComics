@@ -1,8 +1,7 @@
 {
   "profiles": {
     "DComics": {
-      "commandName": "Project",
-      "commandLineArgs": "2 [{ \"nm\": \"Doomsday Clock #11\", \"link\": \"https:\\/\\/mega.nz\\/#!kIkCQQYB!MwGII_Q6KwaktEbG5mQa47kjhy0YP6lRYm2pvkp8D8c\" }, { \"nm\": \"Doomsday Clock #10\", \"link\": \"https:\\/\\/mega.nz\\/#!sV1WSIrB!PDCQEBCUXk8XSSfETuO_utmFTqJyz0aCoVTJQqZvDus\" }, { \"nm\": \"Doomsday Clock #09\", \"link\": \"https:\\/\\/mega.nz\\/#!hc8knKID!Dry_G9RCtGRv_u5OU1v_sS9Jxc0OIEAxL5zGRfWoey8\" }, { \"nm\": \"Doomsday Clock #08\", \"link\": \"https:\\/\\/mega.nz\\/#!pZshmSZT!VK8oLwglF3GbALGou7zMYZqAdAOHYcI76SzSJBQdDiE\" }, { \"nm\": \"Doomsday Clock #07\", \"link\": \"https:\\/\\/mega.nz\\/#!QcVUAC6A!MD-NRYH_0Hn526jFpJGWDwuXTYG6QGlJXQUPp0yisR0\" }, { \"nm\": \"Doomsday Clock #06\", \"link\": \"https:\\/\\/mega.nz\\/#!5IdnVIha!IBrvxrF4pZ_AgEHuoBafWVSDRugFpd0pjRg2k49_11c\" }, { \"nm\": \"Doomsday Clock #05\", \"link\": \"https:\\/\\/mega.nz\\/#!995iCIgL!2T74bUYkRzdl_Ma3NFYwlolFyyR34U-SYo1l4mWNBM0\" }, { \"nm\": \"Doomsday Clock #04\", \"link\": \"https:\\/\\/mega.nz\\/#!B9YHlSTI!9HAlNWVHgGAS8LI0lFZNfoCSGLKdjWoUo7PFCKyt7oM\" }, { \"nm\": \"Doomsday Clock #03\", \"link\": \"https:\\/\\/mega.nz\\/#!8kZFmT7C!yILo5uRYPcO9AU86-Pe4ISIDpck6DUqBVBaGVAzSQHM\" }, { \"nm\": \"Doomsday Clock #02\", \"link\": \"https:\\/\\/mega.nz\\/#!94JCmCIL!7SIyhL2gJhjuslVaqBO6L_2S2roGAZzOL6xB4bkH94g\" }, { \"nm\": \"Doomsday Clock #01\", \"link\": \"https:\\/\\/mega.nz\\/#!dghXVK4L!Ead8dX_IDBEBVdYI9yTwKQ-g4xinEFwSbDGnyrcYrjc\" }]"
+      "commandName": "Project"
     }
   }
 }

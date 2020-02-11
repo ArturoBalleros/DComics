@@ -2,13 +2,16 @@
 using DComics.Models;
 using HtmlAgilityPack;
 using log4net;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ScrapySharp.Extensions;
+using SevenZipExtractor;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 
@@ -83,7 +86,7 @@ namespace DComics
                 Uri uri = new Uri(comic.Link);
                 INodeInfo infoMega = mega.GetNodeFromLink(uri);
                 comic.NameWeb = infoMega.Name;
-                comic.SizeWeb = float.Parse(FormatSize(infoMega.Size));
+                comic.SizeWeb = FormatSize(infoMega.Size);
                 return ExecuteBatch(comic.Link, logger);
             }
             catch (Exception ex)
@@ -106,10 +109,9 @@ namespace DComics
                 string size = doc.DocumentNode.CssSelect(".dl-info").CssSelect(".details").ToList()[0].InnerText;
                 size = size.Replace("File size: ", "º").Replace("MB", "º");
                 int dif = size.LastIndexOf("º") - size.IndexOf("º") - 1;
-                comic.SizeWeb = float.Parse(size.Substring(size.IndexOf("º") + 1, dif));
-
+                comic.SizeWeb = size.Substring(size.IndexOf("º") + 1, dif);
                 System.Net.WebClient wc = new System.Net.WebClient();
-                wc.DownloadFile(linkDownload, comic.NameWeb);
+                wc.DownloadFile(linkDownload, Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
                 wc.Dispose();
                 return true;
             }
@@ -145,32 +147,68 @@ namespace DComics
 
         private void RenameFile(Comic comic, ILog logger)
         {
-            string downloadPath = Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb;
-            string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
-            FileInfo fi = new FileInfo(downloadPath);
-            if (fi.Exists)
-            {
-                if (string.Format("{0:n1}", comic.SizeWeb).Equals(string.Format("{0:n1}", float.Parse(FormatSize(fi.Length)))))
+            try
+            {        
+                string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name + ".cbr";
+                FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
+                if (fileDownloadInfo.Exists)
                 {
-                    destinyPath += fi.Extension;
-                    if (fi.Extension.Equals(".cbr"))
+                    string sizeWeb = string.Format("{0:n1}", float.Parse(comic.SizeWeb.Replace(".", ",")));
+                    string sizeDisk = string.Format("{0:n1}", float.Parse(FormatSize(fileDownloadInfo.Length)));
+                    if (sizeWeb.Equals(sizeDisk))
                     {
-                    }
-                    else if (fi.Extension.Equals(".rar"))
-                    {
-                    }
-                    else
-                    {
+                        //zip y cbz
+                        if (fileDownloadInfo.Extension.Equals(".cbr")) //Download file cbr
+                        {
+                            File.Move(fileDownloadInfo.FullName, destinyPath);
+                        }
+                        else if (fileDownloadInfo.Extension.Equals(".cbz")) //Download file cbz
+                        {
+                            File.Move(fileDownloadInfo.FullName, destinyPath);
+                        }
+                        else if (fileDownloadInfo.Extension.Equals(".rar")) //Download file rar
+                        {
+                            extractFile(fileDownloadInfo.FullName);//Extract file or directory
+                            //Get InfoFile
+                            FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                            long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
+                            if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                            {
+                                File.Move(fileDescom.FullName, destinyPath);
+                                File.Delete(fileDescom.FullName);
+                            }
+                            else //If extract file is a directory
+                            {
+                                DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
+                                long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
+                                if (diffTimeDir <= 60) //If extract file is a file
+                                {
+                                    ZipFile.CreateFromDirectory(directoryDescom.FullName, destinyPath);
+                                    Directory.Delete(directoryDescom.FullName, true);
+                                }
+                            }
+                        }
+                        else //Download file unknown
+                        {
+                            File.Move(fileDownloadInfo.FullName, destinyPath);
+                        }
+                        File.Delete(fileDownloadInfo.FullName);
                     }
                 }
-
-
-
             }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
 
-        http://decodigo.com/c-sharp-renombrar-archivo
-            //Mirar nombres extensiones etc......
-            File.Move(comic.NameWeb, comic.Name);//Asi se renombra
+        private static void extractFile(string Path)
+        {
+            using (ArchiveFile archiveFile = new ArchiveFile(Path))
+            {
+                archiveFile.Extract(Environment.CurrentDirectory + @"\Scripts\");
+            }
         }
 
         #region Create Report

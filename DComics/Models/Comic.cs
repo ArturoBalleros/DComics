@@ -10,7 +10,7 @@ namespace DComics.Models
         [JsonProperty("link")]
         public string Link { get; set; }
         public string NameWeb { get; set; }
-        public float SizeWeb { get; set; }
+        public string SizeWeb { get; set; }
         public Comic()
         {
 
