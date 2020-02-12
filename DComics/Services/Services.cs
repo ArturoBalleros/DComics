@@ -32,6 +32,7 @@ namespace DComics
                     {
                         ProcessJSON((JArray)JsonConvert.DeserializeObject(line), logger);
                         Console.WriteLine(line);
+                        break; //quitar
                     }
                 }
             }
@@ -148,50 +149,23 @@ namespace DComics
         private void RenameFile(Comic comic, ILog logger)
         {
             try
-            {        
-                string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name + ".cbr";
-                FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
+            {
+                string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
+                 FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
                 if (fileDownloadInfo.Exists)
                 {
                     string sizeWeb = string.Format("{0:n1}", float.Parse(comic.SizeWeb.Replace(".", ",")));
                     string sizeDisk = string.Format("{0:n1}", float.Parse(FormatSize(fileDownloadInfo.Length)));
                     if (sizeWeb.Equals(sizeDisk))
                     {
-                        //zip y cbz
                         if (fileDownloadInfo.Extension.Equals(".cbr")) //Download file cbr
-                        {
-                            File.Move(fileDownloadInfo.FullName, destinyPath);
-                        }
+                            File.Move(fileDownloadInfo.FullName, destinyPath + ".cbr");
                         else if (fileDownloadInfo.Extension.Equals(".cbz")) //Download file cbz
-                        {
-                            File.Move(fileDownloadInfo.FullName, destinyPath);
-                        }
-                        else if (fileDownloadInfo.Extension.Equals(".rar")) //Download file rar
-                        {
-                            extractFile(fileDownloadInfo.FullName);//Extract file or directory
-                            //Get InfoFile
-                            FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").GetFiles().OrderByDescending(f => f.CreationTime).First();
-                            long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
-                            if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
-                            {
-                                File.Move(fileDescom.FullName, destinyPath);
-                                File.Delete(fileDescom.FullName);
-                            }
-                            else //If extract file is a directory
-                            {
-                                DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
-                                long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
-                                if (diffTimeDir <= 60) //If extract file is a file
-                                {
-                                    ZipFile.CreateFromDirectory(directoryDescom.FullName, destinyPath);
-                                    Directory.Delete(directoryDescom.FullName, true);
-                                }
-                            }
-                        }
+                            File.Move(fileDownloadInfo.FullName, destinyPath + ".cbz");
+                        else if (fileDownloadInfo.Extension.Equals(".rar") || fileDownloadInfo.Extension.Equals(".zip")) //Download file rar
+                            extractFile(fileDownloadInfo, destinyPath);//Extract file or directory
                         else //Download file unknown
-                        {
-                            File.Move(fileDownloadInfo.FullName, destinyPath);
-                        }
+                            File.Move(fileDownloadInfo.FullName, destinyPath + ".cbr");
                         File.Delete(fileDownloadInfo.FullName);
                     }
                 }
@@ -203,11 +177,50 @@ namespace DComics
             }
         }
 
-        private static void extractFile(string Path)
+        private static void extractFile(FileInfo fileDownloadInfo, string destinyPath)
         {
-            using (ArchiveFile archiveFile = new ArchiveFile(Path))
+            if (fileDownloadInfo.Extension.Equals(".rar")) //rar
             {
-                archiveFile.Extract(Environment.CurrentDirectory + @"\Scripts\");
+                using (ArchiveFile archiveFile = new ArchiveFile(fileDownloadInfo.FullName))
+                {
+                    archiveFile.Extract(Environment.CurrentDirectory + @"\Scripts\Comic\");
+                }
+            }
+            else //zip      
+                ZipFile.ExtractToDirectory(fileDownloadInfo.FullName, Environment.CurrentDirectory + @"\Scripts\Comic\");
+
+            int countFiles = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().Count();
+            if (countFiles == 0) //folder
+            {
+                DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
+                long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
+                if (diffTimeDir <= 60) //If extract file is a file
+                {
+                    ZipFile.CreateFromDirectory(directoryDescom.FullName, destinyPath + ".cbr");
+                    Directory.Delete(directoryDescom.FullName, true);
+                }
+            }
+
+            if (countFiles == 1) //file 
+            {
+                FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
+                if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                {
+                    File.Move(fileDescom.FullName, destinyPath + fileDescom.Extension);
+                    File.Delete(fileDescom.FullName);
+                }
+            }
+
+            if (countFiles > 1) //collection photo
+            {
+                FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
+                if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                {
+                    ZipFile.CreateFromDirectory(Environment.CurrentDirectory + @"\Scripts\Comic\", destinyPath + ".cbr");
+                    Directory.Delete(Environment.CurrentDirectory + @"\Scripts\Comic\", true);
+                }
             }
         }
 
