@@ -27,8 +27,8 @@ namespace DComics.Models
             return string.Format("Id: {0}, Name: {1}, Link: {2}, NameWeb: {3}", Id, Name, Link, NameWeb);
         }
 
-        public static string Serializer(List<Comic> comics) {
-            return JsonConvert.SerializeObject(comics, Formatting.Indented);  
+        public static string Serializer(List<Comic> comics, bool indented = true) {
+            return indented ? JsonConvert.SerializeObject(comics, Formatting.Indented) : JsonConvert.SerializeObject(comics, Formatting.None);  
         }
     }
 }

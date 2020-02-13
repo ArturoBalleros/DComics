@@ -23,7 +23,7 @@ namespace DComics
                     logger.Info("Fin del proceso por falta de archivos");
                     return;
                 }
-                args = new string[] { "1", @"json.txt" };
+                args = new string[] { "0", @"json.txt" };
                 if (args != null)
                 {
                     option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
@@ -32,7 +32,7 @@ namespace DComics
                 switch (option)
                 {
                     case 0: //Bajar últimos
-
+                        services.DownloadNews(logger);
                         break;
 
                     case 1://Fichero

@@ -19,7 +19,49 @@ namespace DComics
 {
     public class Services
     {
+        private const string Url = "http://www.comicsid.com/inicio";
         #region Main Services
+        public void DownloadNews(ILog logger)
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+                List<Comic> news = new List<Comic>();
+                string nameLastDonwload = ReadLastDownload(logger), name, link, newNameLastDonwload = null;
+                int countNovedades = 1;
+
+                HtmlWeb oWeb = new HtmlWeb();
+                HtmlDocument doc = oWeb.Load(Url);
+
+                foreach (var Nodo in doc.DocumentNode.CssSelect(".listadoComics").CssSelect(".mdl-list__item"))
+                {
+                    //Get Data
+                    name = Nodo.CssSelect(".mdl-list__item-primary-content").CssSelect("span").FirstOrDefault().InnerText;
+                    link = Nodo.CssSelect(".btnMaterialGlobal").CssSelect("a").First().Attributes[0].Value;
+                    if (countNovedades == 1) newNameLastDonwload = name;
+                    if (!string.IsNullOrEmpty(nameLastDonwload) && nameLastDonwload.Equals(name))
+                        break;
+                    else
+                        news.Add(new Comic(countNovedades , name, link));
+                    if (string.IsNullOrEmpty(nameLastDonwload) && countNovedades == 5)
+                        break;
+                    countNovedades++;
+                }
+
+                string path = CreateFileReportNews(news, logger);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    CreateFileLastDownload(newNameLastDonwload, logger);
+                    ReadFile(path, logger);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
         public void ReadFile(string path, ILog logger)
         {
             try
@@ -29,7 +71,7 @@ namespace DComics
                 {
                     string line;
                     while ((line = jsonStream.ReadLine()) != null)
-                        ProcessJSON((JArray)JsonConvert.DeserializeObject(line), logger, false);
+                        ProcessJSON((JArray)JsonConvert.DeserializeObject(line), logger);
                 }
                 logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
             }
@@ -42,7 +84,7 @@ namespace DComics
         #endregion
 
         #region Hook Method
-        private void ProcessJSON(JArray array, ILog logger, bool flagNews, List<Comic> collectionNews = null)
+        private void ProcessJSON(JArray array, ILog logger)
         {
             try
             {
@@ -53,9 +95,6 @@ namespace DComics
                     //Convert Object
                     Comic comic = new Comic(cont++, c.GetValue("name").ToString(), c.GetValue("link").ToString());
                     Console.WriteLine(comic.Name); logger.Warn(string.Format("Inicio: {0}", comic.Name));
-
-                    //If It's new, i register
-                    if (flagNews) collectionNews.Add(comic);
 
                     //Download File
                     if (comic.Link.Contains("mega.nz"))
@@ -75,8 +114,6 @@ namespace DComics
                 }
                 if (collectionNoDownload.Count > 0)
                     CreateFileReportNoDownload(collectionNoDownload, logger);
-                if (flagNews)
-                    CreateFileReportNews(collectionNews, logger);
             }
             catch (Exception ex)
             {
@@ -278,18 +315,20 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        private void CreateFileReportNews(List<Comic> comics, ILog logger)
+        private string CreateFileReportNews(List<Comic> comics, ILog logger)
         {
             try
             {
                 string docPath = Environment.CurrentDirectory + string.Format(@"\Report\{0:dd-MM-yyyy}.json", DateTime.Now);
                 using StreamWriter outputFile = File.AppendText(docPath);
-                outputFile.WriteLine(Comic.Serializer(comics));
+                outputFile.WriteLine(Comic.Serializer(comics, false));
+                return docPath;
             }
             catch (Exception ex)
             {
                 if (logger != null)
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return null;
             }
         }
         private void CreateFileLastDownload(string titleComics, ILog logger)
