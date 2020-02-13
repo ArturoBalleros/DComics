@@ -13,43 +13,46 @@ namespace DComics
         public static void Main(string[] args)
         {
             logger = initLogger();
-            logger.Info("Inicio del proceso");
+            int option = 0;
+            string infoAdditional = "";
+            Services services = new Services();
             try
             {
+                logger.Info("Inicio del proceso");
+                if (!services.CheckDirectoriesAndFiles(logger)) {
+                    logger.Info("Fin del proceso por falta de archivos");
+                    return;
+                }
                 args = new string[] { "1", @"json.txt" };
                 if (args != null)
                 {
-
-                    int option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
-                    string infoAdditional = !string.IsNullOrEmpty(args[1]) ? args[1] : "";
-                    /*
-                        0 => Bajar últimos
-                        1 => Fichero
-                     */
-                    Services services = new Services();
-                    switch (option)
-                    {
-                        case 0:
-
-                            break;
-
-                        case 1:
-                            services.ReadFile(infoAdditional, logger);
-                            break;
-                              
-                        default:
-                            return;
-                    }
+                    option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
+                    infoAdditional = !string.IsNullOrEmpty(args[1]) ? args[1] : "";
                 }
+                switch (option)
+                {
+                    case 0: //Bajar últimos
+
+                        break;
+
+                    case 1://Fichero
+                        services.ReadFile(infoAdditional, logger);
+                        break;
+
+                    default:
+                        return;
+                }
+                logger.Info("Fin del proceso");
             }
             catch (Exception ex)
             {
-                if(logger != null)
-                    logger.Error(string.Format( "Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
 
-        private static ILog initLogger(){
+        private static ILog initLogger()
+        {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
             return LogManager.GetLogger(typeof(Program));

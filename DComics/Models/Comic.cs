@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace DComics.Models
 {
@@ -24,6 +25,10 @@ namespace DComics.Models
         public override string ToString()
         {
             return string.Format("Id: {0}, Name: {1}, Link: {2}, NameWeb: {3}", Id, Name, Link, NameWeb);
+        }
+
+        public static string Serializer(List<Comic> comics) {
+            return JsonConvert.SerializeObject(comics, Formatting.Indented);  
         }
     }
 }

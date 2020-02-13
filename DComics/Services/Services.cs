@@ -29,12 +29,9 @@ namespace DComics
                 {
                     string line;
                     while ((line = jsonStream.ReadLine()) != null)
-                    {
-                        ProcessJSON((JArray)JsonConvert.DeserializeObject(line), logger);
-                        Console.WriteLine(line);
-                        break; //quitar
-                    }
+                        ProcessJSON((JArray)JsonConvert.DeserializeObject(line), logger, false);
                 }
+                logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
             }
             catch (Exception ex)
             {
@@ -45,16 +42,22 @@ namespace DComics
         #endregion
 
         #region Hook Method
-        public void ProcessJSON(JArray array, ILog logger)
+        private void ProcessJSON(JArray array, ILog logger, bool flagNews, List<Comic> collectionNews = null)
         {
             try
             {
-                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
-                List<Comic> collection = new List<Comic>();
+                List<Comic> collectionNoDownload = new List<Comic>();
                 int cont = 1; bool result = false;
                 foreach (JObject c in array.OfType<JObject>())
                 {
+                    //Convert Object
                     Comic comic = new Comic(cont++, c.GetValue("name").ToString(), c.GetValue("link").ToString());
+                    Console.WriteLine(comic.Name); logger.Warn(string.Format("Inicio: {0}", comic.Name));
+
+                    //If It's new, i register
+                    if (flagNews) collectionNews.Add(comic);
+
+                    //Download File
                     if (comic.Link.Contains("mega.nz"))
                         result = ProcessDownloadMega(comic, logger);
                     else if (comic.Link.Contains("mediafire.com"))
@@ -62,12 +65,18 @@ namespace DComics
                     else
                         result = false;
 
+                    //Rename File
                     if (result)
                         RenameFile(comic, logger);
                     else
-                        collection.Add(comic);
+                        collectionNoDownload.Add(comic);
+
+                    logger.Warn(string.Format("Fin: {0}", comic.Name));
                 }
-                CreateFileReportNoDownload(collection, logger);
+                if (collectionNoDownload.Count > 0)
+                    CreateFileReportNoDownload(collectionNoDownload, logger);
+                if (flagNews)
+                    CreateFileReportNews(collectionNews, logger);
             }
             catch (Exception ex)
             {
@@ -78,7 +87,7 @@ namespace DComics
         #endregion
 
         #region Download Comics
-        private static bool ProcessDownloadMega(Comic comic, ILog logger)
+        private bool ProcessDownloadMega(Comic comic, ILog logger)
         {
             try
             {
@@ -97,7 +106,7 @@ namespace DComics
                 return false;
             }
         }
-        private static bool ProcessDownloadMediaFire(Comic comic, ILog logger)
+        private bool ProcessDownloadMediaFire(Comic comic, ILog logger)
         {
             try
             {
@@ -123,7 +132,7 @@ namespace DComics
                 return false;
             }
         }
-        private static bool ExecuteBatch(string link, ILog logger)
+        private bool ExecuteBatch(string link, ILog logger)
         {
             try
             {
@@ -146,12 +155,36 @@ namespace DComics
         }
         #endregion
 
+        #region Files and Directories
+        public bool CheckDirectoriesAndFiles(ILog logger)
+        {
+            try
+            {
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Download\").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Download\");
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Report\").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Report\");
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Scripts\");
+                if (!new FileInfo(Environment.CurrentDirectory + @"\Scripts\Download.bat").Exists)
+                    return false;
+                if (!new FileInfo(Environment.CurrentDirectory + @"\Scripts\DownloadMega.py").Exists)
+                    return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return false;
+            }
+        }
         private void RenameFile(Comic comic, ILog logger)
         {
             try
             {
                 string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
-                 FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
+                FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
                 if (fileDownloadInfo.Exists)
                 {
                     string sizeWeb = string.Format("{0:n1}", float.Parse(comic.SizeWeb.Replace(".", ",")));
@@ -163,7 +196,7 @@ namespace DComics
                         else if (fileDownloadInfo.Extension.Equals(".cbz")) //Download file cbz
                             File.Move(fileDownloadInfo.FullName, destinyPath + ".cbz");
                         else if (fileDownloadInfo.Extension.Equals(".rar") || fileDownloadInfo.Extension.Equals(".zip")) //Download file rar
-                            extractFile(fileDownloadInfo, destinyPath);//Extract file or directory
+                            ExtractFile(fileDownloadInfo, destinyPath, logger);//Extract file or directory
                         else //Download file unknown
                             File.Move(fileDownloadInfo.FullName, destinyPath + ".cbr");
                         File.Delete(fileDownloadInfo.FullName);
@@ -176,82 +209,51 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-
-        private static void extractFile(FileInfo fileDownloadInfo, string destinyPath)
+        private void ExtractFile(FileInfo fileDownloadInfo, string destinyPath, ILog logger)
         {
-            if (fileDownloadInfo.Extension.Equals(".rar")) //rar
+            try
             {
-                using (ArchiveFile archiveFile = new ArchiveFile(fileDownloadInfo.FullName))
+                if (fileDownloadInfo.Extension.Equals(".rar")) //rar
                 {
+                    using ArchiveFile archiveFile = new ArchiveFile(fileDownloadInfo.FullName);
                     archiveFile.Extract(Environment.CurrentDirectory + @"\Scripts\Comic\");
                 }
-            }
-            else //zip      
-                ZipFile.ExtractToDirectory(fileDownloadInfo.FullName, Environment.CurrentDirectory + @"\Scripts\Comic\");
+                else //zip      
+                    ZipFile.ExtractToDirectory(fileDownloadInfo.FullName, Environment.CurrentDirectory + @"\Scripts\Comic\");
 
-            int countFiles = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().Count();
-            if (countFiles == 0) //folder
-            {
-                DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
-                long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
-                if (diffTimeDir <= 60) //If extract file is a file
+                int countFiles = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().Count();
+                if (countFiles == 0) //folder
                 {
-                    ZipFile.CreateFromDirectory(directoryDescom.FullName, destinyPath + ".cbr");
-                    Directory.Delete(directoryDescom.FullName, true);
+                    DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
+                    long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
+                    if (diffTimeDir <= 60) //If extract file is a file
+                    {
+                        ZipFile.CreateFromDirectory(directoryDescom.FullName, destinyPath + ".cbr");
+                        Directory.Delete(directoryDescom.FullName, true);
+                    }
                 }
-            }
 
-            if (countFiles == 1) //file 
-            {
-                FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
-                long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
-                if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                if (countFiles == 1) //file 
                 {
-                    File.Move(fileDescom.FullName, destinyPath + fileDescom.Extension);
-                    File.Delete(fileDescom.FullName);
+                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                    long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
+                    if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                    {
+                        File.Move(fileDescom.FullName, destinyPath + fileDescom.Extension);
+                        File.Delete(fileDescom.FullName);
+                    }
                 }
-            }
 
-            if (countFiles > 1) //collection photo
-            {
-                FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
-                long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
-                if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
+                if (countFiles > 1) //collection photo
                 {
-                    ZipFile.CreateFromDirectory(Environment.CurrentDirectory + @"\Scripts\Comic\", destinyPath + ".cbr");
-                    Directory.Delete(Environment.CurrentDirectory + @"\Scripts\Comic\", true);
-                }
-            }
-        }
+                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                    long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
+                    if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file                    
+                        ZipFile.CreateFromDirectory(Environment.CurrentDirectory + @"\Scripts\Comic\", destinyPath + ".cbr");
 
-        #region Create Report
-        //Mirar donde se crean los archivos
-        private static void CreateFileReportNoDownload(List<Comic> comics, ILog logger)
-        {
-            try
-            {
-                string docPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\ComicsId";
-                using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "a.txt")))
-                {
-                    foreach (Comic comic in comics)
-                        outputFile.WriteLine(comic.ToString());
                 }
-            }
-            catch (Exception ex)
-            {
-                if (logger != null)
-                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
-            }
-        }
-        private static void CreateFileLastDownload(string titleComics, ILog logger)
-        {
-            try
-            {
-                string docPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\ComicsId";
-                using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "a.txt")))
-                {
-                    outputFile.WriteLine(titleComics);
-                }
+
+                Directory.Delete(Environment.CurrentDirectory + @"\Scripts\Comic\", true);
             }
             catch (Exception ex)
             {
@@ -261,37 +263,75 @@ namespace DComics
         }
         #endregion
 
+        #region Create Report
+        private void CreateFileReportNoDownload(List<Comic> comics, ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + @"\Report\NoDownload.json";
+                using StreamWriter outputFile = File.AppendText(docPath);
+                outputFile.WriteLine(Comic.Serializer(comics) + "\n");
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        private void CreateFileReportNews(List<Comic> comics, ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + string.Format(@"\Report\{0:dd-MM-yyyy}.json", DateTime.Now);
+                using StreamWriter outputFile = File.AppendText(docPath);
+                outputFile.WriteLine(Comic.Serializer(comics));
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        private void CreateFileLastDownload(string titleComics, ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + @"\Report\LastDownload.txt";
+                using StreamWriter outputFile = new StreamWriter(docPath);
+                outputFile.WriteLine(titleComics);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        private string ReadLastDownload(ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + @"\Report\LastDownload.txt";
+                if (!new FileInfo(docPath).Exists) return null;
+                using StreamReader file = new StreamReader(docPath);
+                return file.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return null;
+            }
+        }
+        #endregion
 
-
-
-
-
-
-        private static string FormatSize(long bytes)
+        #region Utils
+        private string FormatSize(long bytes)
         {
             decimal number = bytes;
             while (Math.Round(number / 1024) >= 1)
-                number = number / 1024;
+                number /= 1024;
             return string.Format("{0:n2}", number);
         }
-
+        #endregion
     }
 }
-
-
-/*
-
-https://social.msdn.microsoft.com/Forums/es-ES/94cb6af5-9016-4248-a7b3-55eedbc63af8/descomprimir-archivos-rar-automaticamente?forum=vcses
-
-quizas podrias evaluar
-
-https://www.nuget.org/packages/dotnet-rar
-
-https://www.nuget.org/packages/dotnet-unrar
-
-o quizas este otro
-
-https://www.nuget.org/packages/SevenZipExtractor/
-
-
-*/
