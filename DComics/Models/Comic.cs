@@ -24,7 +24,7 @@ namespace DComics.Models
         }
         public override string ToString()
         {
-            return string.Format("Id: {0}, Name: {1}, Link: {2}, NameWeb: {3}", Id, Name, Link, NameWeb);
+            return string.Format("Id: {0}, Name: {1}, Link: {2}, NameWeb: {3}, SizeWeb: {4}", Id, Name, Link, NameWeb, SizeWeb);
         }
 
         public static string Serializer(List<Comic> comics, bool indented = true) {

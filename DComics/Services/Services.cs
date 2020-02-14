@@ -42,7 +42,7 @@ namespace DComics
                     if (!string.IsNullOrEmpty(nameLastDonwload) && nameLastDonwload.Equals(name))
                         break;
                     else
-                        news.Add(new Comic(countNovedades , name, link));
+                        news.Add(new Comic(countNovedades, name, link));
                     if (string.IsNullOrEmpty(nameLastDonwload) && countNovedades == 5)
                         break;
                     countNovedades++;
@@ -94,7 +94,7 @@ namespace DComics
                 {
                     //Convert Object
                     Comic comic = new Comic(cont++, c.GetValue("name").ToString(), c.GetValue("link").ToString());
-                    Console.WriteLine(comic.Name); logger.Warn(string.Format("Inicio: {0}", comic.Name));
+                    Console.WriteLine(comic.Name); logger.Warn(string.Format("Inicio: {0}", comic.ToString()));
 
                     //Download File
                     if (comic.Link.Contains("mega.nz"))
@@ -109,8 +109,8 @@ namespace DComics
                         RenameFile(comic, logger);
                     else
                         collectionNoDownload.Add(comic);
-
-                    logger.Warn(string.Format("Fin: {0}", comic.Name));
+                    logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic })));
+                    logger.Warn(string.Format("Fin: {0}", comic.ToString()));
                 }
                 if (collectionNoDownload.Count > 0)
                     CreateFileReportNoDownload(collectionNoDownload, logger);
@@ -197,6 +197,8 @@ namespace DComics
         {
             try
             {
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Log\").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Log\");
                 if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Download\").Exists)
                     Directory.CreateDirectory(Environment.CurrentDirectory + @"\Download\");
                 if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Report\").Exists)
