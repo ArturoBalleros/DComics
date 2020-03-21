@@ -89,11 +89,12 @@ namespace DComics
             try
             {
                 List<Comic> collectionNoDownload = new List<Comic>();
+                List<Comic> collectionNoRename = new List<Comic>();
                 int cont = 1; bool result = false;
                 foreach (JObject c in array.OfType<JObject>())
                 {
                     //Convert Object
-                    Comic comic = new Comic(cont++, c.GetValue("name").ToString(), c.GetValue("link").ToString());
+                    Comic comic = new Comic(cont++, c.GetValue("name").ToString().Replace("/", "&"), c.GetValue("link").ToString());
                     Console.WriteLine(comic.Name); logger.Warn(string.Format("Inicio: {0}", comic.ToString()));
 
                     //Download File
@@ -106,7 +107,10 @@ namespace DComics
 
                     //Rename File
                     if (result)
-                        RenameFile(comic, logger);
+                    {
+                        if (!RenameFile(comic, logger))
+                            collectionNoRename.Add(comic);
+                    }
                     else
                         collectionNoDownload.Add(comic);
                     logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic })));
@@ -114,6 +118,8 @@ namespace DComics
                 }
                 if (collectionNoDownload.Count > 0)
                     CreateFileReportNoDownload(collectionNoDownload, logger);
+                if (collectionNoRename.Count > 0)
+                    CreateFileReportNoRename(collectionNoDownload, logger);
             }
             catch (Exception ex)
             {
@@ -218,10 +224,11 @@ namespace DComics
                 return false;
             }
         }
-        private void RenameFile(Comic comic, ILog logger)
+        private bool RenameFile(Comic comic, ILog logger)
         {
             try
             {
+                bool result = true;
                 string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
                 FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
                 if (fileDownloadInfo.Exists)
@@ -235,20 +242,23 @@ namespace DComics
                         else if (fileDownloadInfo.Extension.Equals(".cbz")) //Download file cbz
                             File.Move(fileDownloadInfo.FullName, destinyPath + ".cbz");
                         else if (fileDownloadInfo.Extension.Equals(".rar") || fileDownloadInfo.Extension.Equals(".zip")) //Download file rar
-                            ExtractFile(fileDownloadInfo, destinyPath, logger);//Extract file or directory
+                            result = ExtractFile(fileDownloadInfo, destinyPath, logger);//Extract file or directory
                         else //Download file unknown
                             File.Move(fileDownloadInfo.FullName, destinyPath + ".cbr");
-                        File.Delete(fileDownloadInfo.FullName);
+                        if (result)
+                            File.Delete(fileDownloadInfo.FullName);
                     }
                 }
+                return result;
             }
             catch (Exception ex)
             {
                 if (logger != null)
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return false;
             }
         }
-        private void ExtractFile(FileInfo fileDownloadInfo, string destinyPath, ILog logger)
+        private bool ExtractFile(FileInfo fileDownloadInfo, string destinyPath, ILog logger)
         {
             try
             {
@@ -293,11 +303,13 @@ namespace DComics
                 }
 
                 Directory.Delete(Environment.CurrentDirectory + @"\Scripts\Comic\", true);
+                return true;
             }
             catch (Exception ex)
             {
                 if (logger != null)
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return false;
             }
         }
         #endregion
@@ -308,6 +320,20 @@ namespace DComics
             try
             {
                 string docPath = Environment.CurrentDirectory + @"\Report\NoDownload.json";
+                using StreamWriter outputFile = File.AppendText(docPath);
+                outputFile.WriteLine(Comic.Serializer(comics) + "\n");
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        private void CreateFileReportNoRename(List<Comic> comics, ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + @"\Report\NoRename.json";
                 using StreamWriter outputFile = File.AppendText(docPath);
                 outputFile.WriteLine(Comic.Serializer(comics) + "\n");
             }
