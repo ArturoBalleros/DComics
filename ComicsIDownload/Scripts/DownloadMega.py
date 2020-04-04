@@ -15,6 +15,8 @@ def downloadFileMega(link):
         m.download_url(link)
     except PermissionError: 
         return 'true'
+    except ValueError as err: 
+        return err
     except:
         return 'false'
 

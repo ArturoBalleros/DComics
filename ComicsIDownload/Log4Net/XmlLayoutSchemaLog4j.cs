@@ -5,7 +5,7 @@ using log4net.Core;
 using log4net.Layout;
 using log4net.Util;
 
-namespace DComics
+namespace ComicsIDownload
 {
     /// <summary>
     /// Layout that formats the log events as XML elements compatible with the log4j schema

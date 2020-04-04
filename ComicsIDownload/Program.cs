@@ -18,11 +18,13 @@ namespace DComics
             try
             {
                 logger.Info("Inicio del proceso");
-                if (!services.CheckDirectoriesAndFiles(logger)) {
+                if (!services.CheckDirectoriesAndFiles(logger))
+                {
                     logger.Info("Fin del proceso por falta de archivos");
                     return;
                 }
-                args = new string[] { "1", @"json.txt" };
+                //args = new string[] { "1", @"json.txt.json" };
+                args = new string[] { "0", @"json.txt" };
                 if (args != null)
                 {
                     option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
@@ -34,8 +36,21 @@ namespace DComics
                         services.DownloadNews(logger);
                         break;
 
-                    case 1://Fichero
+                    case 1: //Fichero
                         services.ReadFile(infoAdditional, logger);
+                        break;
+
+                    case 2: //Renombrar
+                        services.RenameFiles(infoAdditional, logger);
+                        break;
+
+                    case 3: //Lista Colecciones
+                        services.ListCollections(logger);
+                        break;
+
+                    case 4: //Arbol de directorios
+                        DirectoryInfo rootDir = new DirectoryInfo(@"I:\ComicsId\Colecciones");
+                        services.TreeDirectory(rootDir, logger);
                         break;
 
                     default:
@@ -54,12 +69,12 @@ namespace DComics
         {
 
 
-         /*   XmlDocument log4netConfig = new XmlDocument();
-            log4netConfig.Load(File.OpenRead("log4net.config"));
-            var repo = LogManager.CreateRepository(Assembly.GetEntryAssembly(), typeof(log4net.Repository.Hierarchy.Hierarchy));
-            XmlConfigurator.Configure(repo, log4netConfig["log4net"]);*/
+            /*   XmlDocument log4netConfig = new XmlDocument();
+               log4netConfig.Load(File.OpenRead("log4net.config"));
+               var repo = LogManager.CreateRepository(Assembly.GetEntryAssembly(), typeof(log4net.Repository.Hierarchy.Hierarchy));
+               XmlConfigurator.Configure(repo, log4netConfig["log4net"]);*/
 
-     
+
 
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));

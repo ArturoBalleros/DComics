@@ -19,6 +19,7 @@ namespace DComics
 {
     public class Services
     {
+        int count = 0;
         private const string Url = "http://www.comicsid.com/inicio";
         #region Main Services
         public void DownloadNews(ILog logger)
@@ -81,6 +82,98 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
+        public void RenameFiles(string path, ILog logger)
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+                List<Comic> listComic = new List<Comic>();
+                List<Comic> listNoRename = new List<Comic>();
+                using (StreamReader jsonStream = File.OpenText(path))
+                {
+                    string line;
+                    while ((line = jsonStream.ReadLine()) != null)
+                        foreach (var x in (JArray)JsonConvert.DeserializeObject(line))
+                            listComic.Add(JsonConvert.DeserializeObject<Comic>(x.ToString()));
+                }
+                foreach (Comic c in listComic)
+                    if (!RenameFile(c, logger))
+                        listNoRename.Add(c);
+                CreateFileReportNoRename(listNoRename, logger);
+                logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        public void ListCollections(ILog logger)
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+                List<string> listCollections = new List<string>();
+
+                HtmlWeb oWeb = new HtmlWeb();
+                HtmlDocument doc = oWeb.Load(@"http://www.comicsid.com/categorias/dc");
+
+                foreach (var Nodo in doc.DocumentNode.CssSelect(".serieComic"))
+                    listCollections.Add(Nodo.ChildNodes.Where(x => x.Name.Equals("br")).Select(y => y.NextSibling).Select(z => z.InnerText.Trim()).FirstOrDefault());
+                CreateFileReportCollections(listCollections, logger);
+                logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        public void TreeDirectory(DirectoryInfo root, ILog logger)
+        {
+            FileInfo[] files = null;
+        
+            // First, process all the files directly under this folder
+            try
+            {
+                files = root.GetFiles("*.*");
+            }
+            // This is thrown if even one of the files requires permissions greater
+            // than the application provides.
+            catch (UnauthorizedAccessException e)
+            {
+                // This code just writes out the message and continues to recurse.
+                // You may decide to do something different here. For example, you
+                // can try to elevate your privileges and access the file again.
+                logger.Warn(e.Message);
+            }
+
+            catch (DirectoryNotFoundException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            if (files != null)
+            {
+                foreach (FileInfo fi in files)
+                {
+                    // In this example, we only access the existing FileInfo object. If we
+                    // want to open, delete or modify the file, then
+                    // a try-catch block is required here to handle the case
+                    // where the file has been deleted since the call to TraverseTree().
+                    count++;
+                    Console.WriteLine(fi.FullName + " " + count);                   
+                }
+
+
+                // Now find all the subdirectories under this directory.
+                DirectoryInfo[]  subDirs = root.GetDirectories();
+
+                foreach (DirectoryInfo dirInfo in subDirs)
+                    // Resursive call for each subdirectory.
+                    TreeDirectory(dirInfo, logger);                
+            }
+        }
         #endregion
 
         #region Hook Method
@@ -140,7 +233,9 @@ namespace DComics
                 INodeInfo infoMega = mega.GetNodeFromLink(uri);
                 comic.NameWeb = infoMega.Name;
                 comic.SizeWeb = FormatSize(infoMega.Size);
-                return ExecuteBatch(comic.Link, logger);
+                bool result = ExecuteBatch(comic.Link, logger);
+                logger.Warn(comic.Name + " - " + result);
+                return result;
             }
             catch (Exception ex)
             {
@@ -187,6 +282,8 @@ namespace DComics
                 p.Start();
                 string output = p.StandardOutput.ReadToEnd();
                 p.WaitForExit();
+                if (!output.Equals("true\r\n") && !output.Equals("false\r\n"))
+                    logger.Fatal(output);
                 return output.Equals("true\r\n");
             }
             catch (Exception ex)
@@ -249,6 +346,8 @@ namespace DComics
                             File.Delete(fileDownloadInfo.FullName);
                     }
                 }
+                else
+                    return false;
                 return result;
             }
             catch (Exception ex)
@@ -366,6 +465,21 @@ namespace DComics
                 string docPath = Environment.CurrentDirectory + @"\Report\LastDownload.txt";
                 using StreamWriter outputFile = new StreamWriter(docPath);
                 outputFile.WriteLine(titleComics);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        private void CreateFileReportCollections(List<string> list, ILog logger)
+        {
+            try
+            {
+                string docPath = Environment.CurrentDirectory + @"\Report\ListCollections.txt";
+                using StreamWriter outputFile = new StreamWriter(docPath);
+                foreach (string name in list)
+                    outputFile.WriteLine(name);
             }
             catch (Exception ex)
             {
