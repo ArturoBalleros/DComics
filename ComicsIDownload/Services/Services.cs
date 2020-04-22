@@ -21,6 +21,11 @@ namespace DComics
     {
         int count = 0;
         private const string Url = "http://www.comicsid.com/inicio";
+        private readonly MegaApiClient ApiMega;
+
+        public Services(MegaApiClient mega) {
+            ApiMega = mega;
+        }
         #region Main Services
         public void DownloadNews(ILog logger)
         {
@@ -243,7 +248,7 @@ namespace DComics
                     }
                     else
                         collectionNoDownload.Add(comic);
-                    logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic })));
+                    logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic },false)));
                     logger.Warn(string.Format("Fin: {0}", comic.ToString()));
                 }
                 if (collectionNoDownload.Count > 0)
@@ -260,21 +265,19 @@ namespace DComics
         #endregion
 
         #region Download Comics
-        public bool ProcessDownloadMega(Comic comic, ILog logger)
+        private bool ProcessDownloadMega(Comic comic, ILog logger)
         {
             try
             {
-                MegaApiClient mega = new MegaApiClient();
-                mega.LoginAnonymous();
+                
+            
                 Uri uri = new Uri(comic.Link);
-                INodeInfo infoMega = mega.GetNodeFromLink(uri);
-                // mega.DownloadFile(uri, infoMega.Name);
-                //mega.Logout();
+                INodeInfo infoMega = ApiMega.GetNodeFromLink(uri);
+                ApiMega.DownloadFile(uri, Environment.CurrentDirectory + @"\Download\" + infoMega.Name);               
                 comic.NameWeb = infoMega.Name;
                 comic.SizeWeb = FormatSize(infoMega.Size);
-                bool result = ExecuteBatch(comic.Link, logger);
-                logger.Warn(comic.Name + " - " + result);
-                return result;
+       
+                return true;
             }
             catch (Exception ex)
             {
@@ -298,32 +301,9 @@ namespace DComics
                 int dif = size.LastIndexOf("º") - size.IndexOf("º") - 1;
                 comic.SizeWeb = size.Substring(size.IndexOf("º") + 1, dif);
                 System.Net.WebClient wc = new System.Net.WebClient();
-                wc.DownloadFile(linkDownload, Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
+                wc.DownloadFile(linkDownload, Environment.CurrentDirectory + @"\Download\" + comic.NameWeb);
                 wc.Dispose();
                 return true;
-            }
-            catch (Exception ex)
-            {
-                if (logger != null)
-                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
-                return false;
-            }
-        }
-        private bool ExecuteBatch(string link, ILog logger)
-        {
-            try
-            {
-                Process p = new Process();
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.FileName = Directory.GetCurrentDirectory() + @"\Scripts\Download.bat";
-                p.StartInfo.Arguments = link;
-                p.Start();
-                string output = p.StandardOutput.ReadToEnd();
-                p.WaitForExit();
-                if (!output.Equals("true\r\n") && !output.Equals("false\r\n"))
-                    logger.Fatal(output);
-                return output.Equals("true\r\n");
             }
             catch (Exception ex)
             {
@@ -345,12 +325,6 @@ namespace DComics
                     Directory.CreateDirectory(Environment.CurrentDirectory + @"\Download\");
                 if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Report\").Exists)
                     Directory.CreateDirectory(Environment.CurrentDirectory + @"\Report\");
-                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\").Exists)
-                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Scripts\");
-                if (!new FileInfo(Environment.CurrentDirectory + @"\Scripts\Download.bat").Exists)
-                    return false;
-                if (!new FileInfo(Environment.CurrentDirectory + @"\Scripts\DownloadMega.py").Exists)
-                    return false;
                 return true;
             }
             catch (Exception ex)
@@ -366,7 +340,9 @@ namespace DComics
             {
                 bool result = true;
                 string destinyPath = Environment.CurrentDirectory + @"\Download\" + comic.Name;
-                FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Scripts\" + comic.NameWeb);
+                FileInfo fileDownloadInfo = new FileInfo(Environment.CurrentDirectory + @"\Download\" + comic.NameWeb);
+                if (destinyPath.Equals(fileDownloadInfo.FullName))
+                    return true;
                 if (fileDownloadInfo.Exists)
                 {
                     string sizeWeb = string.Format("{0:n1}", float.Parse(comic.SizeWeb.Replace(".", ",")));
@@ -400,18 +376,20 @@ namespace DComics
         {
             try
             {
+                //Extract compress file
                 if (fileDownloadInfo.Extension.Equals(".rar")) //rar
                 {
                     using ArchiveFile archiveFile = new ArchiveFile(fileDownloadInfo.FullName);
-                    archiveFile.Extract(Environment.CurrentDirectory + @"\Scripts\Comic\");
+                    archiveFile.Extract(Environment.CurrentDirectory + @"\Download\Comic\");
                 }
                 else //zip      
-                    ZipFile.ExtractToDirectory(fileDownloadInfo.FullName, Environment.CurrentDirectory + @"\Scripts\Comic\");
+                    ZipFile.ExtractToDirectory(fileDownloadInfo.FullName, Environment.CurrentDirectory + @"\Download\Comic\");
 
-                int countFiles = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().Count();
+                //Create/Rename extract file(s)
+                int countFiles = new DirectoryInfo(Environment.CurrentDirectory + @"\Download\Comic\").GetFiles().Count();
                 if (countFiles == 0) //folder
                 {
-                    DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
+                    DirectoryInfo directoryDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Download\Comic\").GetDirectories().OrderByDescending(d => d.CreationTime).First();
                     long diffTimeDir = DateAndTime.DateDiff(DateInterval.Second, directoryDescom.CreationTime, DateTime.Now);
                     if (diffTimeDir <= 60) //If extract file is a file
                     {
@@ -422,7 +400,7 @@ namespace DComics
 
                 if (countFiles == 1) //file 
                 {
-                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Download\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
                     long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
                     if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file
                     {
@@ -433,14 +411,14 @@ namespace DComics
 
                 if (countFiles > 1) //collection photo
                 {
-                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Scripts\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
+                    FileInfo fileDescom = new DirectoryInfo(Environment.CurrentDirectory + @"\Download\Comic\").GetFiles().OrderByDescending(f => f.CreationTime).First();
                     long diffTimeFile = DateAndTime.DateDiff(DateInterval.Second, fileDescom.CreationTime, DateTime.Now);
                     if (diffTimeFile <= 60 && !fileDescom.FullName.Equals(fileDownloadInfo.FullName)) //If extract file is a file                    
-                        ZipFile.CreateFromDirectory(Environment.CurrentDirectory + @"\Scripts\Comic\", destinyPath + ".cbr");
+                        ZipFile.CreateFromDirectory(Environment.CurrentDirectory + @"\Download\Comic\", destinyPath + ".cbr");
 
                 }
 
-                Directory.Delete(Environment.CurrentDirectory + @"\Scripts\Comic\", true);
+                Directory.Delete(Environment.CurrentDirectory + @"\Download\Comic\", true);
                 return true;
             }
             catch (Exception ex)

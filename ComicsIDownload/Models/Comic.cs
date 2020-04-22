@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DComics.Models
 {
-  public  class Comic
+    class Comic
     {
         public int Id { get; set; }
         [JsonProperty("name")]
@@ -27,8 +27,9 @@ namespace DComics.Models
             return string.Format("Id: {0}, Name: {1}, Link: {2}, NameWeb: {3}, SizeWeb: {4}", Id, Name, Link, NameWeb, SizeWeb);
         }
 
-        public static string Serializer(List<Comic> comics, bool indented = true) {
-            return indented ? JsonConvert.SerializeObject(comics, Formatting.Indented) : JsonConvert.SerializeObject(comics, Formatting.None);  
+        public static string Serializer(List<Comic> comics, bool indented = true)
+        {
+            return indented ? JsonConvert.SerializeObject(comics, Formatting.Indented) : JsonConvert.SerializeObject(comics, Formatting.None);
         }
     }
 }

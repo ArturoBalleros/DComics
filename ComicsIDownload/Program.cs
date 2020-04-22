@@ -3,6 +3,7 @@ using log4net.Config;
 using System.IO;
 using System.Reflection;
 using System;
+using CG.Web.MegaApiClient;
 
 namespace DComics
 {
@@ -13,10 +14,13 @@ namespace DComics
         {
             logger = initLogger();
             int option = 0;
-            string infoAdditional = "";
-            Services services = new Services();
+            string infoAdditional = "";       
             try
-            {       
+            {
+                MegaApiClient mega = new MegaApiClient();
+                mega.LoginAnonymous();
+                Services services = new Services(mega);
+
                 logger.Info("Inicio del proceso");
                 if (!services.CheckDirectoriesAndFiles(logger))
                 {
@@ -24,7 +28,7 @@ namespace DComics
                     return;
                 }
                 //args = new string[] { "1", @"json.txt.json" };
-                args = new string[] { "7", @"json.txt" };
+                args = new string[] { "1", @"json.txt" };
                 if (args != null)
                 {
                     option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
@@ -61,15 +65,11 @@ namespace DComics
                         services.ReadCollection(@"http://www.comicsid.com/serie/142-90-serie", logger);
                         break;
 
-                    case 7:                        
-                        services.ProcessDownloadMega(new Models.Comic { Id = 1, Name = "Antiguo", Link = "https://mega.nz/#!bR1nUBJD!EZynCJ8eFM-i5yD6tIDedbxRR9EV2yo7oYtXoYmmqXI" }, logger);
-                        services.ProcessDownloadMega(new Models.Comic { Id = 2, Name = "Nuevo", Link = "https://mega.nz/file/UEs2VYYb#yl7y2arlm5uiB14odydnHRFkeUcQ03WhnBFYF2d2im8" }, logger);
-                        break;
-
                     default:
                         return;
                 }
                 logger.Info("Fin del proceso");
+                mega.Logout();
             }
             catch (Exception ex)
             {
