@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DComics.Models
 {
-    class Comic
+  public  class Comic
     {
         public int Id { get; set; }
         [JsonProperty("name")]

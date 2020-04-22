@@ -108,7 +108,7 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        public void ListCollections(ILog logger)
+        public void ListCollections(ILog logger, string option = "Name")
         {
             try
             {
@@ -118,9 +118,20 @@ namespace DComics
                 HtmlWeb oWeb = new HtmlWeb();
                 HtmlDocument doc = oWeb.Load(@"http://www.comicsid.com/categorias/dc");
 
-                foreach (var Nodo in doc.DocumentNode.CssSelect(".serieComic"))
-                    listCollections.Add(Nodo.ChildNodes.Where(x => x.Name.Equals("br")).Select(y => y.NextSibling).Select(z => z.InnerText.Trim()).FirstOrDefault());
-                CreateFileReportCollections(listCollections, logger);
+                if (option.Equals("Name"))
+                {
+                    foreach (var Nodo in doc.DocumentNode.CssSelect(".serieComic"))
+                        listCollections.Add(Nodo.ChildNodes.Where(x => x.Name.Equals("br")).Select(y => y.NextSibling).Select(z => z.InnerText.Trim()).FirstOrDefault());
+                    CreateFileReportCollections(listCollections, logger);
+                }
+
+                if (option.Equals("File"))
+                {
+                    var listNodos = doc.DocumentNode.CssSelect(".serieComic").CssSelect(".urlSerie").Select(n => n.ChildNodes.Where(cn => cn.Name.Equals("div"))).Select(n => n.Select(la => la.Attributes.Where(a => a.Name.Equals("data-valor")))).ToList();
+                    foreach (var Nodo in listNodos)
+                        ReadCollection(@"http://www.comicsid.com/serie/" + Nodo.FirstOrDefault().FirstOrDefault().Value + "-serie", logger);
+                }
+
                 logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
             }
             catch (Exception ex)
@@ -132,7 +143,7 @@ namespace DComics
         public void TreeDirectory(DirectoryInfo root, ILog logger)
         {
             FileInfo[] files = null;
-        
+
             // First, process all the files directly under this folder
             try
             {
@@ -162,16 +173,42 @@ namespace DComics
                     // a try-catch block is required here to handle the case
                     // where the file has been deleted since the call to TraverseTree().
                     count++;
-                    Console.WriteLine(fi.FullName + " " + count);                   
+                    Console.WriteLine(fi.FullName + " " + count);
                 }
 
 
                 // Now find all the subdirectories under this directory.
-                DirectoryInfo[]  subDirs = root.GetDirectories();
+                DirectoryInfo[] subDirs = root.GetDirectories();
 
                 foreach (DirectoryInfo dirInfo in subDirs)
                     // Resursive call for each subdirectory.
-                    TreeDirectory(dirInfo, logger);                
+                    TreeDirectory(dirInfo, logger);
+            }
+        }
+        public void ReadCollection(string url, ILog logger)
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+                List<Comic> collection = new List<Comic>();
+                string name, link;
+                HtmlWeb oWeb = new HtmlWeb();
+                HtmlDocument doc = oWeb.Load(url);
+                string nameCollection = doc.DocumentNode.CssSelect(".titul").Select(cn => cn.ChildNodes.Where(n => n.Name == "h3")).FirstOrDefault().Select(n => n.InnerText).FirstOrDefault().Replace(@"\n", string.Empty).TrimStart().Trim();
+                int count = doc.DocumentNode.CssSelect(".listadoComics").CssSelect(".mdl-list__item").Count();
+                foreach (var Nodo in doc.DocumentNode.CssSelect(".listadoComics").CssSelect(".mdl-list__item"))
+                {
+                    //Get Data     
+                    name = Nodo.CssSelect(".mdl-list__item-primary-content").CssSelect("span").FirstOrDefault().InnerText;
+                    link = Nodo.CssSelect(".btnMaterialGlobal").CssSelect("a").First().Attributes[0].Value;
+                    collection.Add(new Comic(count--, name, link));
+                }
+                CreateFileReportCollection(collection.OrderBy(x => x.Id).ToList(), nameCollection, logger);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
         #endregion
@@ -223,7 +260,7 @@ namespace DComics
         #endregion
 
         #region Download Comics
-        private bool ProcessDownloadMega(Comic comic, ILog logger)
+        public bool ProcessDownloadMega(Comic comic, ILog logger)
         {
             try
             {
@@ -231,6 +268,8 @@ namespace DComics
                 mega.LoginAnonymous();
                 Uri uri = new Uri(comic.Link);
                 INodeInfo infoMega = mega.GetNodeFromLink(uri);
+                // mega.DownloadFile(uri, infoMega.Name);
+                //mega.Logout();
                 comic.NameWeb = infoMega.Name;
                 comic.SizeWeb = FormatSize(infoMega.Size);
                 bool result = ExecuteBatch(comic.Link, logger);
@@ -501,6 +540,24 @@ namespace DComics
                 if (logger != null)
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
                 return null;
+            }
+        }
+        private void CreateFileReportCollection(List<Comic> comics, string title, ILog logger)
+        {
+            try
+            {
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Report\").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Report\");
+                if (!new DirectoryInfo(Environment.CurrentDirectory + @"\Report\Collections").Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + @"\Report\Collections");
+                string docPath = Environment.CurrentDirectory + @"\Report\Collections\" + title.Replace("/", "&").Replace(":", " -") + ".txt";
+                using StreamWriter outputFile = File.AppendText(docPath);
+                outputFile.WriteLine(Comic.Serializer(comics));
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
         #endregion

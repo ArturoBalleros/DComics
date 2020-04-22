@@ -16,7 +16,7 @@ namespace DComics
             string infoAdditional = "";
             Services services = new Services();
             try
-            {
+            {       
                 logger.Info("Inicio del proceso");
                 if (!services.CheckDirectoriesAndFiles(logger))
                 {
@@ -24,7 +24,7 @@ namespace DComics
                     return;
                 }
                 //args = new string[] { "1", @"json.txt.json" };
-                args = new string[] { "0", @"json.txt" };
+                args = new string[] { "7", @"json.txt" };
                 if (args != null)
                 {
                     option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
@@ -51,6 +51,19 @@ namespace DComics
                     case 4: //Arbol de directorios
                         DirectoryInfo rootDir = new DirectoryInfo(@"I:\ComicsId\Colecciones");
                         services.TreeDirectory(rootDir, logger);
+                        break;
+
+                    case 5: //Ficheros pos lista con todos los nombres y links
+                        services.ListCollections(logger, "File");
+                        break;
+                        
+                    case 6: //Ficheros pos lista con todos los nombres y links
+                        services.ReadCollection(@"http://www.comicsid.com/serie/142-90-serie", logger);
+                        break;
+
+                    case 7:                        
+                        services.ProcessDownloadMega(new Models.Comic { Id = 1, Name = "Antiguo", Link = "https://mega.nz/#!bR1nUBJD!EZynCJ8eFM-i5yD6tIDedbxRR9EV2yo7oYtXoYmmqXI" }, logger);
+                        services.ProcessDownloadMega(new Models.Comic { Id = 2, Name = "Nuevo", Link = "https://mega.nz/file/UEs2VYYb#yl7y2arlm5uiB14odydnHRFkeUcQ03WhnBFYF2d2im8" }, logger);
                         break;
 
                     default:

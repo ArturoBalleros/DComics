@@ -220,6 +220,7 @@ method="run" file="Generator.java" line="94"/>
                 writer.WriteAttributeString("method", locationInfo.MethodName);
                 writer.WriteAttributeString("file", locationInfo.FileName);
                 writer.WriteAttributeString("line", locationInfo.LineNumber);
+                
                 writer.WriteEndElement();
             }
 
