@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System;
 using CG.Web.MegaApiClient;
+using System.Collections.Generic;
 
 namespace DComics
 {
@@ -28,7 +29,7 @@ namespace DComics
                     return;
                 }
                 //args = new string[] { "1", @"json.txt.json" };
-                args = new string[] { "1", @"json.txt" };
+                args = new string[] { "7", @"json.txt" };
                 if (args != null)
                 {
                     option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
@@ -54,7 +55,7 @@ namespace DComics
 
                     case 4: //Arbol de directorios
                         DirectoryInfo rootDir = new DirectoryInfo(@"I:\ComicsId\Colecciones");
-                        services.TreeDirectory(rootDir, logger);
+                        services.TreeDirectory(rootDir, new List<string>(), logger);
                         break;
 
                     case 5: //Ficheros pos lista con todos los nombres y links
@@ -63,6 +64,10 @@ namespace DComics
                         
                     case 6: //Ficheros pos lista con todos los nombres y links
                         services.ReadCollection(@"http://www.comicsid.com/serie/142-90-serie", logger);
+                        break;
+
+                    case 7: //Segunda revision de los descargados
+                        services.ReviewNoDownload(infoAdditional, logger);
                         break;
 
                     default:

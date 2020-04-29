@@ -23,7 +23,8 @@ namespace DComics
         private const string Url = "http://www.comicsid.com/inicio";
         private readonly MegaApiClient ApiMega;
 
-        public Services(MegaApiClient mega) {
+        public Services(MegaApiClient mega)
+        {
             ApiMega = mega;
         }
         #region Main Services
@@ -145,7 +146,7 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        public void TreeDirectory(DirectoryInfo root, ILog logger)
+        public void TreeDirectory(DirectoryInfo root, List<string> listFiles, ILog logger)
         {
             FileInfo[] files = null;
 
@@ -179,6 +180,7 @@ namespace DComics
                     // where the file has been deleted since the call to TraverseTree().
                     count++;
                     Console.WriteLine(fi.FullName + " " + count);
+                    listFiles.Add(fi.Name.Replace(fi.Extension, ""));
                 }
 
 
@@ -187,7 +189,7 @@ namespace DComics
 
                 foreach (DirectoryInfo dirInfo in subDirs)
                     // Resursive call for each subdirectory.
-                    TreeDirectory(dirInfo, logger);
+                    TreeDirectory(dirInfo, listFiles, logger);
             }
         }
         public void ReadCollection(string url, ILog logger)
@@ -209,6 +211,36 @@ namespace DComics
                     collection.Add(new Comic(count--, name, link));
                 }
                 CreateFileReportCollection(collection.OrderBy(x => x.Id).ToList(), nameCollection, logger);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+            }
+        }
+        public void ReviewNoDownload(string fileName, ILog logger)
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+                List<Comic> listComicsDia = new List<Comic>();    
+                List<Comic> listComicsDiaNo = new List<Comic>();
+                using (StreamReader jsonStream = File.OpenText(fileName))
+                {
+                    string line;
+                    while ((line = jsonStream.ReadLine()) != null)
+                        foreach (var json in (JArray)JsonConvert.DeserializeObject(line))
+                            listComicsDia.Add(JsonConvert.DeserializeObject<Comic>(json.ToString()));
+                }                 
+
+                foreach (Comic c in listComicsDia)
+                {
+                    bool Cbr = new FileInfo( string.Format( @"I:\DComics\ComicsIDownload\bin\Debug\netcoreapp3.0\Download\{0}.cbr", c.Name.Replace("/", "&"))).Exists;
+                    bool Cbz = new FileInfo(string.Format(@"I:\DComics\ComicsIDownload\bin\Debug\netcoreapp3.0\Download\{0}.cbz", c.Name.Replace("/", "&"))).Exists;
+                    if (!Cbr && !Cbz)
+                        listComicsDiaNo.Add(c);
+                }
+                CreateFileReportNoDownload(listComicsDiaNo, logger);
             }
             catch (Exception ex)
             {
@@ -248,7 +280,7 @@ namespace DComics
                     }
                     else
                         collectionNoDownload.Add(comic);
-                    logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic },false)));
+                    logger.Debug(string.Format("JSON: {0}", Comic.Serializer(new List<Comic> { comic }, false)));
                     logger.Warn(string.Format("Fin: {0}", comic.ToString()));
                 }
                 if (collectionNoDownload.Count > 0)
@@ -269,14 +301,14 @@ namespace DComics
         {
             try
             {
-                
-            
+
+
                 Uri uri = new Uri(comic.Link);
                 INodeInfo infoMega = ApiMega.GetNodeFromLink(uri);
-                ApiMega.DownloadFile(uri, Environment.CurrentDirectory + @"\Download\" + infoMega.Name);               
+                ApiMega.DownloadFile(uri, Environment.CurrentDirectory + @"\Download\" + infoMega.Name);
                 comic.NameWeb = infoMega.Name;
                 comic.SizeWeb = FormatSize(infoMega.Size);
-       
+
                 return true;
             }
             catch (Exception ex)

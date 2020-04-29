@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProjectInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.sonarsource.com/msbuild/integration/2015/1">
+  <ProjectName>ReadDCInfo</ProjectName>
+  <ProjectLanguage>C#</ProjectLanguage>
+  <ProjectType>Product</ProjectType>
+  <ProjectGuid>b030c993-7773-433d-8017-7b5fa558cc93</ProjectGuid>
+  <FullPath>I:\DComics\ReadDCInfo\ReadDCInfo.csproj</FullPath>
+  <IsExcluded>false</IsExcluded>
+  <AnalysisResults>
+    <AnalysisResult Id="FilesToAnalyze" Location="I:\DComics\.sonarqube\out\1\FilesToAnalyze.txt" />
+  </AnalysisResults>
+  <AnalysisSettings>
+    <Property Name="sonar.cs.roslyn.reportFilePath">I:\DComics\ReadDCInfo\bin\Debug\netcoreapp3.1\ReadDCInfo.dll.RoslynCA.json|I:\DComics\ReadDCInfo\bin\Debug\netcoreapp3.1\ReadDCInfo.dll.RoslynCA.json</Property>
+    <Property Name="sonar.cs.analyzer.projectOutPath">I:\DComics\.sonarqube\out\1</Property>
+  </AnalysisSettings>
+  <Configuration>Debug</Configuration>
+  <Platform>AnyCPU</Platform>
+  <TargetFramework>netcoreapp3.1</TargetFramework>
+</ProjectInfo>

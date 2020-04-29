@@ -1,0 +1,9 @@
+3
+*I:\DComics\ReadDCInfo\Models\Collection.csutf-86
+-I:\DComics\ReadDCInfo\Models\CollectionWeb.csutf-88
+/I:\DComics\ReadDCInfo\Models\ComicsDbContext.csutf-8.
+%I:\DComics\ReadDCInfo\Models\Issue.csutf-8)
+ I:\DComics\ReadDCInfo\Program.csutf-87
+.I:\DComics\ReadDCInfo\Services\ScrapService.csutf-8\
+QC:\Users\KarVeg\AppData\Local\Temp\.NETCoreApp,Version=v3.1.AssemblyAttributes.csutf-8S
+HI:\DComics\ReadDCInfo\obj\Debug\netcoreapp3.1\ReadDCInfo.AssemblyInfo.csutf-8
