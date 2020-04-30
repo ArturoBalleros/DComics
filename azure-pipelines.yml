@@ -20,9 +20,8 @@ steps:
   displayName: 'Prepare analysis on SonarQube'
   inputs:
     SonarQube: sonarkarveg
-    projectKey: DComics
-    projectName: DComics
-    projectVersion: 0.7
+    scannerMode: CLI
+    configFile: '.sonarqube/out/sonar-project.properties'
 
 - task: NuGetToolInstaller@1
 
