@@ -1,4 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RuleSet Name="SonarQube - DComics Sonar way" ToolsVersion="16.0">
-  <Include Path="I:\DComics\.sonarlint\dcomicscsharp.ruleset" Action="Default" />
+  <Include Path="..\.sonarlint\dcomicscsharp.ruleset" Action="Default" />
 </RuleSet>

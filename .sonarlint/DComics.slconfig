@@ -1,12 +1,12 @@
 {
-  "ServerUri": "https://sonarkarveg.azurewebsites.net/",
+  "ServerUri": "http://localhost:9000/",
   "Organization": null,
   "ProjectKey": "DComics",
   "ProjectName": "DComics",
   "Profiles": {
     "CSharp": {
-      "ProfileKey": "AXHLzCT1wNVQq_xFYddj",
-      "ProfileTimestamp": "2020-04-30T15:54:45Z"
+      "ProfileKey": "AXHF29rDhboWQf4y2tSY",
+      "ProfileTimestamp": "2020-04-29T12:14:12Z"
     }
   }
 }
