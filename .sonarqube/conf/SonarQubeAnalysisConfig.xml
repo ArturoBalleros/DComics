@@ -8,7 +8,7 @@
   <SonarQubeHostUrl>http://localhost:9000</SonarQubeHostUrl>
   <SonarQubeVersion>8.2.0.32929</SonarQubeVersion>
   <SonarProjectKey>DComics</SonarProjectKey>
-  <SonarProjectVersion>1.0</SonarProjectVersion>
+  <SonarProjectVersion>1.1</SonarProjectVersion>
   <SonarProjectName>DComics</SonarProjectName>
   <AdditionalConfig>
     <ConfigSetting Id="BuildUri" />
@@ -100,8 +100,8 @@
     <Property Name="sonaranalyzer-vbnet.pluginKey">vbnet</Property>
     <Property Name="sonar.java.collectAnalysisErrors">false</Property>
     <Property Name="sonar.updatecenter.url">https://update.sonarsource.org/update-center.properties</Property>
-    <Property Name="sonar.core.startTime">28/04/2020 19:29:28</Property>
-    <Property Name="sonar.core.id">BF41A1F2-AXHB1iQXOeGY_QFGFC0_</Property>
+    <Property Name="sonar.core.id">BF41A1F2-AXHF23wLhboWQf4y2rXG</Property>
+    <Property Name="sonar.core.startTime">29/04/2020 23:27:53</Property>
   </ServerSettings>
   <LocalSettings />
   <AnalyzersSettings>
