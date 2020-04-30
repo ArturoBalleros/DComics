@@ -10,12 +10,12 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <CodeAnalysisRuleSet>ComicsIDownload.ruleset</CodeAnalysisRuleSet>
-    <WarningsAsErrors>NU1605</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1605</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <CodeAnalysisRuleSet>ComicsIDownload.ruleset</CodeAnalysisRuleSet>
-    <WarningsAsErrors>NU1605</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1605</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
