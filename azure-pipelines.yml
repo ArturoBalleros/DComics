@@ -20,13 +20,13 @@ steps:
     packageType: 'sdk'
     version: '3.1.x'
 
-#- task: SonarQubePrepare@4
-#  displayName: 'Prepare analysis on SonarQube'
-#  inputs:
-#    SonarQube: sonarkarveg
-#    projectKey: DComics
-#    projectName: DComics
-#    projectVersion: 0.7
+- task: SonarQubePrepare@4
+  displayName: 'Prepare analysis on SonarQube'
+  inputs:
+    SonarQube: sonarkarveg
+    projectKey: DComics
+    projectName: DComics
+    projectVersion: 1.0
 
 - task: NuGetToolInstaller@1
 
@@ -39,13 +39,13 @@ steps:
   inputs:
     command: 'build'
 
-#- task: ArchiveFiles@2
-#  inputs:
-#    rootFolderOrFile: '$(Build.BinariesDirectory)'
-#    includeRootFolder: true
-#    archiveType: 'zip'
-#    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-#    replaceExistingArchive: true
+- task: SonarQubeAnalyze@4
+  displayName: 'Run Code Analysis'
+
+- task: SonarQubePublish@4
+  displayName: 'Publish Quality Gate Result'
+  inputs:
+    pollingTimeoutSec: '300'
 
 - task: DotNetCoreCLI@2
   displayName: dotnet publish backend --configuration $(buildConfiguration)
@@ -60,12 +60,4 @@ steps:
 - task: PublishBuildArtifacts@1
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-    artifactName: 'myWebsiteName'
-
-#- task: SonarQubeAnalyze@4
-#  displayName: 'Run Code Analysis'
-
-#- task: SonarQubePublish@4
-#  displayName: 'Publish Quality Gate Result'
-#  inputs:
-#    pollingTimeoutSec: '300'
+    artifactName: 'Publicación'
