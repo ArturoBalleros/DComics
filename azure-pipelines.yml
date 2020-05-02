@@ -51,11 +51,16 @@ steps:
   displayName: dotnet publish backend --configuration $(buildConfiguration)
   name: PublishBackendProject
   inputs:
-    command: 'publish'
+    command: publish
     projects: '**/*.csproj'
     publishWebProjects: false
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory).zip'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
+    artifactName: 'myWebsiteName'
 
 #- task: SonarQubeAnalyze@4
 #  displayName: 'Run Code Analysis'
