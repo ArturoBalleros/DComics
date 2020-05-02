@@ -39,14 +39,22 @@ steps:
   inputs:
     command: 'build'
 
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
 - task: DotNetCoreCLI@2
   displayName: dotnet publish backend --configuration $(buildConfiguration)
   name: PublishBackendProject
   inputs:
-    command: publish
+    command: 'publish'
     projects: '**/backend/**/*.csproj'
     publishWebProjects: false
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: true
 
 #- task: SonarQubeAnalyze@4
