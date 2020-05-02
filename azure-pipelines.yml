@@ -46,7 +46,7 @@ steps:
     command: publish
     projects: '**/backend/**/*.csproj'
     publishWebProjects: false
-    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
     zipAfterPublish: true
 
 #- task: SonarQubeAnalyze@4
