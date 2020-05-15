@@ -83,27 +83,6 @@ namespace ComicsIDownload
 
         #endregion
 
-        /* Example log4j schema event
-<log4j:event logger="first logger" level="ERROR" thread="Thread-3" timestamp="1051494121460">
-  <log4j:message><![CDATA[errormsg 3]]></log4j:message>
-  <log4j:NDC><![CDATA[third]]></log4j:NDC>
-  <log4j:MDC>
-    <log4j:data name="some string" value="some valuethird"/>
-  </log4j:MDC>
-  <log4j:throwable><![CDATA[java.lang.Exception: someexception-third
- 	at org.apache.log4j.chainsaw.Generator.run(Generator.java:94)
-]]></log4j:throwable>
-  <log4j:locationInfo class="org.apache.log4j.chainsaw.Generator"
-method="run" file="Generator.java" line="94"/>
-  <log4j:properties>
-    <log4j:data name="log4jmachinename" value="windows"/>
-    <log4j:data name="log4japp" value="udp-generator"/>
-  </log4j:properties>
-</log4j:event>
-		*/
-
-        /* Since log4j 1.3 the log4j:MDC has been combined into the log4j:properties element */
-
         /// <summary>
         /// Actually do the writing of the xml
         /// </summary>
@@ -119,45 +98,30 @@ method="run" file="Generator.java" line="94"/>
             // Translate logging events for log4j
 
             // Translate hostname property
-            if (loggingEvent.LookupProperty(LoggingEvent.HostNameProperty) != null &&
-                loggingEvent.LookupProperty("log4jmachinename") == null)
-            {
+            if (loggingEvent.LookupProperty(LoggingEvent.HostNameProperty) != null && loggingEvent.LookupProperty("log4jmachinename") == null)
                 loggingEvent.GetProperties()["log4jmachinename"] = loggingEvent.LookupProperty(LoggingEvent.HostNameProperty);
-            }
+
 
             // translate appdomain name
-            if (loggingEvent.LookupProperty("log4japp") == null &&
-                loggingEvent.Domain != null &&
-                loggingEvent.Domain.Length > 0)
-            {
+            if (loggingEvent.LookupProperty("log4japp") == null && loggingEvent.Domain != null && loggingEvent.Domain.Length > 0)
                 loggingEvent.GetProperties()["log4japp"] = loggingEvent.Domain;
-            }
+
 
             // translate identity name
-            if (loggingEvent.Identity != null &&
-                loggingEvent.Identity.Length > 0 &&
-                loggingEvent.LookupProperty(LoggingEvent.IdentityProperty) == null)
-            {
+            if (loggingEvent.Identity != null && loggingEvent.Identity.Length > 0 && loggingEvent.LookupProperty(LoggingEvent.IdentityProperty) == null)
                 loggingEvent.GetProperties()[LoggingEvent.IdentityProperty] = loggingEvent.Identity;
-            }
+
 
             // translate user name
-            if (loggingEvent.UserName != null &&
-                loggingEvent.UserName.Length > 0 &&
-                loggingEvent.LookupProperty(LoggingEvent.UserNameProperty) == null)
-            {
+            if (loggingEvent.UserName != null && loggingEvent.UserName.Length > 0 && loggingEvent.LookupProperty(LoggingEvent.UserNameProperty) == null)
                 loggingEvent.GetProperties()[LoggingEvent.UserNameProperty] = loggingEvent.UserName;
-            }
+
 
             // Write the start element
             writer.WriteStartElement("log4j", "event", "log4j");
             writer.WriteAttributeString("logger", loggingEvent.LoggerName);
 
             // Calculate the timestamp as the number of milliseconds since january 1970
-            // 
-            // We must convert the TimeStamp to UTC before performing any mathematical
-            // operations. This allows use to take into account discontinuities
-            // caused by daylight savings time transitions.
             TimeSpan timeSince1970 = loggingEvent.TimeStampUtc - s_date1970;
 
             writer.WriteAttributeString("timestamp", XmlConvert.ToString((long)timeSince1970.TotalMilliseconds));
@@ -166,7 +130,7 @@ method="run" file="Generator.java" line="94"/>
 
             // Append the message text
             writer.WriteStartElement("log4j", "message", "log4j");
-            Transform.WriteEscapedXmlString(writer, loggingEvent.RenderedMessage, this.InvalidCharReplacement);
+            Transform.WriteEscapedXmlString(writer, loggingEvent.RenderedMessage, InvalidCharReplacement);
             writer.WriteEndElement();
 
             object ndcObj = loggingEvent.LookupProperty("NDC");
@@ -178,7 +142,7 @@ method="run" file="Generator.java" line="94"/>
                 {
                     // Append the NDC text
                     writer.WriteStartElement("log4j", "NDC", "log4j");
-                    Transform.WriteEscapedXmlString(writer, valueStr, this.InvalidCharReplacement);
+                    Transform.WriteEscapedXmlString(writer, valueStr, InvalidCharReplacement);
                     writer.WriteEndElement();
                 }
             }
@@ -207,7 +171,7 @@ method="run" file="Generator.java" line="94"/>
             {
                 // Append the stack trace line
                 writer.WriteStartElement("log4j", "throwable", "log4j");
-                Transform.WriteEscapedXmlString(writer, exceptionStr, this.InvalidCharReplacement);
+                Transform.WriteEscapedXmlString(writer, exceptionStr, InvalidCharReplacement);
                 writer.WriteEndElement();
             }
 
@@ -220,7 +184,7 @@ method="run" file="Generator.java" line="94"/>
                 writer.WriteAttributeString("method", locationInfo.MethodName);
                 writer.WriteAttributeString("file", locationInfo.FileName);
                 writer.WriteAttributeString("line", locationInfo.LineNumber);
-                
+
                 writer.WriteEndElement();
             }
 
