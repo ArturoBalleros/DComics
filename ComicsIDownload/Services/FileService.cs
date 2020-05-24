@@ -33,6 +33,8 @@ namespace ComicsIDownload.Services
                     Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.Report);
                 if (!new DirectoryInfo(Environment.CurrentDirectory + Constantes.ReportCollections).Exists)
                     Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.ReportCollections);
+                if (!new DirectoryInfo(Environment.CurrentDirectory + Constantes.ReportHistory).Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.ReportHistory);
                 return true;
             }
             catch (Exception ex)

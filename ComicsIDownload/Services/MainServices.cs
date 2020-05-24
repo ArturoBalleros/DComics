@@ -53,11 +53,11 @@ namespace DComics
                     countNovedades++;
                 }
 
-                string path = string.Format("{0:dd-MM-yyyy}.json", DateTime.Now);
-                if (reportService.CreateFileReport(news, path))
+                string file = string.Format("{0:dd-MM-yyyy}.json", DateTime.Now);
+                if (reportService.CreateFileReport(news, file, Constantes.ReportHistory))
                 {
-                    reportService.CreateFileReport(newNameLastDonwload, "LastDownload.txt");
-                    ReadFile(path);
+                    reportService.CreateFileReport(newNameLastDonwload, "LastDownload.txt", append: false);
+                    DownloadFile(Constantes.ReportHistory + file);
                 }
 
             }
@@ -67,7 +67,7 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        public void ReadFile(string path)
+        public void DownloadFile(string path)
         {
             try
             {
@@ -217,7 +217,7 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        public void ReviewNoDownload(string fileName)
+        public void ReviewNoDownload(string fileName, string path)
         {
             try
             {
@@ -235,8 +235,8 @@ namespace DComics
 
                 foreach (Comic c in listComicsDia)
                 {
-                    bool Cbr = new FileInfo(string.Format(@"I:\DComics\ComicsIDownload\bin\Debug\netcoreapp3.0\Download\{0}.cbr", c.Name.Replace(Constantes.BarraLateral, Constantes.Ampersand))).Exists;
-                    bool Cbz = new FileInfo(string.Format(@"I:\DComics\ComicsIDownload\bin\Debug\netcoreapp3.0\Download\{0}.cbz", c.Name.Replace(Constantes.BarraLateral, Constantes.Ampersand))).Exists;
+                    bool Cbr = new FileInfo(string.Format(path + @"\{0}.cbr", c.Name.Replace(Constantes.BarraLateral, Constantes.Ampersand))).Exists;
+                    bool Cbz = new FileInfo(string.Format(path + @"\{0}.cbz", c.Name.Replace(Constantes.BarraLateral, Constantes.Ampersand))).Exists;
                     if (!Cbr && !Cbz)
                         listComicsDiaNo.Add(c);
                 }
@@ -272,7 +272,7 @@ namespace DComics
                     //Rename File
                     if (downloadService.DownloadFile(comic))
                     {
-                        if (!fileService.RenameFile(comic)) 
+                        if (!fileService.RenameFile(comic))
                             collectionNoRename.Add(comic);
                     }
                     else

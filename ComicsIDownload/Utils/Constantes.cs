@@ -12,13 +12,14 @@
         public const string Log = @"\Log\";
         public const string Report = @"\Report\";
         public const string DownloadComics = @"\Download\Comic\";
-        public const string ReportCollections = @"\Report\Collections";
+        public const string ReportCollections = @"\Report\Collections\";
+        public const string ReportHistory = @"\Report\History\";
 
         public const string File = @"File";
         public const string Name = @"Name";
 
         public const string Mega = @"mega.nz";
-        public const string MediaFile = @"mediafile.com";
+        public const string MediaFile = @"mediafire.com";
 
         public const string WhiteSpace = " ";
         public const string BarraLateral = "/";

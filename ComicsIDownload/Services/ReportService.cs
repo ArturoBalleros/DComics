@@ -17,25 +17,35 @@ namespace ComicsIDownload.Services
         {
             logger = initLogger();
         }
-        
-        public bool CreateFileReport(object obj, string title, string path = Constantes.Report, bool indented = false)
+
+        public bool CreateFileReport(object obj, string title, string path = Constantes.Report, bool indented = false, bool append = true)
         {
             try
             {
+                bool result = false;
                 string docPath = Environment.CurrentDirectory + path + title;
-                using StreamWriter outputFile = File.AppendText(docPath);
+                using StreamWriter outputFile = new StreamWriter(docPath, append);
 
                 if (obj.GetType().Name.Equals("String"))
+                {
                     outputFile.WriteLine((string)obj);
+                    result = true;
+                }
 
-                if (obj.GetType().Name.Equals("DComics.Models.Comic"))
+                if (!result && obj.GetType().FullName.Contains("DComics.Models.Comic"))
+                {
                     outputFile.WriteLine(Comic.Serializer((List<Comic>)obj, indented) + "\n");
+                    result = true;
+                }
 
-                if (obj.GetType().Name.Equals("System.String,"))
+                if (!result && obj.GetType().FullName.Contains("System.String,"))
+                {
                     foreach (string name in (List<string>)obj)
                         outputFile.WriteLine(name);
+                    result = true;
+                }
 
-                return true;
+                return result;
             }
             catch (Exception ex)
             {
