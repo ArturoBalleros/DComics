@@ -16,18 +16,17 @@ namespace DComics
 
         public static void Main(string[] args)
         {
-            //args = new string[] { "1", @"json.txt" };
-            // args = new string[] { "0", @"23-05-2020.json" };
+            //args = new string[] { "1", @"json.txt", "" };
+            args = new string[] { "0", @"23-05-2020.json", "" };
             try
             {
                 FileService fileService = new FileService();
+                logger = InitLogger();
+                logger.Info("Inicio del proceso");
 
                 int option = !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 0;
                 string infoAdditional = !string.IsNullOrEmpty(args[1]) ? args[1] : string.Empty;
                 string infoAdditional2 = !string.IsNullOrEmpty(args[2]) ? args[2] : string.Empty;
-
-                logger = initLogger();
-                logger.Info("Inicio del proceso");
 
                 if (!fileService.CheckDirectories())
                 {
@@ -60,7 +59,7 @@ namespace DComics
 
                     case 1: //Descarga Fichero
                         if (!string.IsNullOrEmpty(infoAdditional)) //Path
-                            services.DownloadFile(infoAdditional);
+                            services.DownloadComicsFile(infoAdditional);
                         break;
 
                     case 2: //Renombra comics en la carpeta Download
@@ -86,7 +85,7 @@ namespace DComics
 
                     case 6: //Fichero por lista, con todos los nombres y links (UNA)
                         if (!string.IsNullOrEmpty(infoAdditional)) //Url
-                            services.ReadCollection(infoAdditional); 
+                            services.ReadCollection(infoAdditional);
                         break;
 
                     case 7: //Segunda revision de los descargados 
@@ -106,7 +105,7 @@ namespace DComics
             }
         }
 
-        private static ILog initLogger()
+        private static ILog InitLogger()
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));

@@ -20,7 +20,7 @@ namespace ComicsIDownload.Services
         public DownloadService(MegaApiClient mega)
         {
             ApiMega = mega;
-            logger = initLogger();
+            logger = InitLogger();
         }
 
         public bool DownloadFile(Comic comic)
@@ -86,7 +86,7 @@ namespace ComicsIDownload.Services
             }
         }
 
-        private ILog initLogger()
+        private ILog InitLogger()
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));

@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComicsIDownload", "ComicsID
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadDCInfo", "ReadDCInfo\ReadDCInfo.csproj", "{B030C993-7773-433D-8017-7B5FA558CC93}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Add2Database", "Add2Database\Add2Database.csproj", "{D322F106-BF2C-4DDB-80F8-A9274FC13EC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckHealthLinks", "CheckHealthLinks\CheckHealthLinks.csproj", "{0D088CE3-0F13-4287-9732-A24FCAF0062F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{B030C993-7773-433D-8017-7B5FA558CC93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B030C993-7773-433D-8017-7B5FA558CC93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B030C993-7773-433D-8017-7B5FA558CC93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D322F106-BF2C-4DDB-80F8-A9274FC13EC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D322F106-BF2C-4DDB-80F8-A9274FC13EC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D322F106-BF2C-4DDB-80F8-A9274FC13EC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D322F106-BF2C-4DDB-80F8-A9274FC13EC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D088CE3-0F13-4287-9732-A24FCAF0062F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D088CE3-0F13-4287-9732-A24FCAF0062F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D088CE3-0F13-4287-9732-A24FCAF0062F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D088CE3-0F13-4287-9732-A24FCAF0062F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

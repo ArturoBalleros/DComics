@@ -15,7 +15,7 @@ namespace ComicsIDownload.Services
 
         public ReportService()
         {
-            logger = initLogger();
+            logger = InitLogger();
         }
 
         public bool CreateFileReport(object obj, string title, string path = Constantes.Report, bool indented = false, bool append = true)
@@ -71,7 +71,7 @@ namespace ComicsIDownload.Services
             }
         }
 
-        private ILog initLogger()
+        private ILog InitLogger()
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));

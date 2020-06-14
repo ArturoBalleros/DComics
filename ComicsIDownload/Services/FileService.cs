@@ -18,7 +18,7 @@ namespace ComicsIDownload.Services
 
         public FileService()
         {
-            logger = initLogger();
+            logger = InitLogger();
         }
 
         public bool CheckDirectories()
@@ -33,6 +33,8 @@ namespace ComicsIDownload.Services
                     Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.Report);
                 if (!new DirectoryInfo(Environment.CurrentDirectory + Constantes.ReportCollections).Exists)
                     Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.ReportCollections);
+                if (!new DirectoryInfo(Environment.CurrentDirectory + Constantes.ReportEditorials).Exists)
+                    Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.ReportEditorials);
                 if (!new DirectoryInfo(Environment.CurrentDirectory + Constantes.ReportHistory).Exists)
                     Directory.CreateDirectory(Environment.CurrentDirectory + Constantes.ReportHistory);
                 return true;
@@ -198,7 +200,7 @@ namespace ComicsIDownload.Services
                 return false;
         }
 
-        private ILog initLogger()
+        private ILog InitLogger()
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));

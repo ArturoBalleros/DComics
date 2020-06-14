@@ -13,6 +13,7 @@
         public const string Report = @"\Report\";
         public const string DownloadComics = @"\Download\Comic\";
         public const string ReportCollections = @"\Report\Collections\";
+        public const string ReportEditorials = @"\Report\Editorials\";
         public const string ReportHistory = @"\Report\History\";
 
         public const string File = @"File";

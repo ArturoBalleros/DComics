@@ -1,4 +1,5 @@
 ﻿using CG.Web.MegaApiClient;
+using ComicsIDownload.Models;
 using ComicsIDownload.Services;
 using ComicsIDownload.Utils;
 using DComics.Models;
@@ -25,7 +26,7 @@ namespace DComics
         public MainServices(MegaApiClient mega)
         {
             ApiMega = mega;
-            logger = initLogger();
+            logger = InitLogger();
         }
 
         #region Main Services
@@ -55,11 +56,7 @@ namespace DComics
 
                 string file = string.Format("{0:dd-MM-yyyy}.json", DateTime.Now);
                 if (reportService.CreateFileReport(news, file, Constantes.ReportHistory))
-                {
                     reportService.CreateFileReport(newNameLastDonwload, "LastDownload.txt", append: false);
-                    DownloadFile(Constantes.ReportHistory + file);
-                }
-
             }
             catch (Exception ex)
             {
@@ -67,7 +64,7 @@ namespace DComics
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
         }
-        public void DownloadFile(string path)
+        public void DownloadComicsFile(string path)
         {
             try
             {
@@ -125,22 +122,43 @@ namespace DComics
                 List<string> listCollections = new List<string>();
 
                 HtmlWeb oWeb = new HtmlWeb();
-                HtmlDocument doc = oWeb.Load(@"http://www.comicsid.com/categorias/dc");
+                HtmlDocument doc;
 
-                if (option.Equals(Constantes.Name))
-                {
-                    foreach (var Nodo in doc.DocumentNode.CssSelect(".serieComic"))
-                        listCollections.Add(Nodo.ChildNodes.Where(x => x.Name.Equals("br")).Select(y => y.NextSibling).Select(z => z.InnerText.Trim()).FirstOrDefault());
-                    reportService.CreateFileReport(listCollections, "ListCollections.txt");
-                }
+                List<Editorial> editoriales = GetEditorials();
+                if (editoriales.Any())
+                    foreach (Editorial e in editoriales)
+                    {
+                        Console.WriteLine("Editorial: " + e.Name);
+                        doc = oWeb.Load(e.Link);
+                        var LinkLetters = doc.DocumentNode.CssSelect(".alfabetoSec").ToList()[0].ChildNodes.Where(x => x.Name.Equals("a")).Select(x => x.Attributes.Where(y => y.Name.Equals("href"))).Select(x => x.Select(n => n.Value)).ToList();
+                        listCollections.Clear();
+                        foreach (var letter in LinkLetters)
+                        {
+                            Console.WriteLine("    Letra: " + letter.FirstOrDefault());
+                            string link = e.Link.Substring(0, e.Link.LastIndexOf(@"/") + 1) + letter.FirstOrDefault();
 
-                if (option.Equals(Constantes.File))
-                {
-                    var listNodos = doc.DocumentNode.CssSelect(".serieComic").CssSelect(".urlSerie").Select(n => n.ChildNodes.Where(cn => cn.Name.Equals("div"))).Select(n => n.Select(la => la.Attributes.Where(a => a.Name.Equals("data-valor")))).ToList();
-                    foreach (var Nodo in listNodos)
-                        ReadCollection(@"http://www.comicsid.com/serie/" + Nodo.FirstOrDefault().FirstOrDefault().Value + "-serie");
-                }
+                            if (option.Equals(Constantes.Name))
+                            {
+                                doc = oWeb.Load(link);
+                                foreach (var Nodo in doc.DocumentNode.CssSelect(".serieComic"))
+                                    listCollections.Add(Nodo.ChildNodes.LastOrDefault(x => x.Name.Equals("#text")).InnerText.Replace("\n", "").Trim().Replace("/", "&").Replace(":", " -"));
+                            }
 
+                            if (option.Equals(Constantes.File))
+                            {
+                                doc = oWeb.Load(link);
+                                var listNodos = doc.DocumentNode.CssSelect(".serieComic").CssSelect(".urlSerie").Select(n => n.ChildNodes.Where(cn => cn.Name.Equals("div"))).Select(n => n.Select(la => la.Attributes.Where(a => a.Name.Equals("data-valor")))).ToList();
+                                foreach (var Nodo in listNodos)
+                                {
+                                    Console.WriteLine("         Serie: " + Nodo.FirstOrDefault().FirstOrDefault().Value);
+                                    ReadCollection(@"http://www.comicsid.com/serie/" + Nodo.FirstOrDefault().FirstOrDefault().Value + "-serie");
+                                }
+                            }
+
+                        }
+                        if (option.Equals(Constantes.Name) && listCollections.Any())
+                            reportService.CreateFileReport(listCollections, e.Name + Constantes.TXT, Constantes.ReportEditorials);
+                    }
                 logger.Info(string.Format("Fin del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
             }
             catch (Exception ex)
@@ -148,7 +166,7 @@ namespace DComics
                 if (logger != null)
                     logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
             }
-        }
+        }        
         public void TreeDirectory(DirectoryInfo root, List<string> listFiles)
         {
             FileInfo[] files = null;
@@ -251,6 +269,40 @@ namespace DComics
         #endregion
 
         #region Hook Method
+        private List<Editorial> GetEditorials()
+        {
+            try
+            {
+                logger.Info(string.Format("Inicio del servicio: '{0}'", MethodBase.GetCurrentMethod().Name));
+
+                HtmlWeb oWeb = new HtmlWeb();
+                HtmlDocument doc = oWeb.Load(@"http://www.comicsid.com/");
+                List<Editorial> editoriales = new List<Editorial>();
+
+                var nameEditoriales = doc.DocumentNode.CssSelect(".listaCategorias").CssSelect(".mdl-list__item-primary-content").Select(x => x.ChildNodes.Where(y => y.Name == "span").ToList()).Select(x => x.Select(y => y.InnerText)).ToList();
+                var linksEditoriales = doc.DocumentNode.CssSelect(".listaCategorias").CssSelect(".btnMaterialGlobal").Select(x => x.Attributes).Select(x => x.Where(y => y.Name == "onclick").ToList()).Select(x => x.Select(x1 => x1.Value).ToList()).ToList();
+
+                for (int i = 0; i < nameEditoriales.Count; i++)
+                {
+                    Editorial e = new Editorial();
+                    var eName = nameEditoriales[i].FirstOrDefault();
+                    var eLink = linksEditoriales[i].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(eName) && !string.IsNullOrEmpty(eLink))
+                    {
+                        e.Name = eName;
+                        e.Link = @"http://www.comicsid.com/" + eLink.Replace("'", "").Replace("location=", "");
+                    }
+                    editoriales.Add(e);
+                }
+                return editoriales;
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                    logger.Error(string.Format("Error en el método: '{0}', Mensaje de error: '{1}'", MethodBase.GetCurrentMethod().Name, ex.Message));
+                return new List<Editorial>();
+            }
+        }
         private void ProcessJSON(JArray array)
         {
             try
@@ -292,7 +344,7 @@ namespace DComics
         }
         #endregion
 
-        private ILog initLogger()
+        private ILog InitLogger()
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
