@@ -16,8 +16,10 @@ namespace DComics
 
         public static void Main(string[] args)
         {
-            //args = new string[] { "1", @"json.txt", "" };
-            args = new string[] { "0", @"23-05-2020.json", "" };
+            /*
+              args = new string[] { "0", @"G:\DComics\ComicsIDownload\bin\Debug\netcoreapp3.0\json.txt", @"G:\141606" };
+               args = new string[] { "1", @"json.txt", @"G:\141606" };
+            */
             try
             {
                 FileService fileService = new FileService();
